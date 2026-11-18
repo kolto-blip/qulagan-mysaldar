@@ -55,7 +55,7 @@ form.card { display: grid; gap: 14px; }
 .rules b { color: #fff; }
 
 /* ойын */
-.hud { display: flex; align-items: center; gap: 8px; padding-block: 10px 6px; font-variant-numeric: tabular-nums; }
+.hud { display: flex; align-items: center; gap: 6px; padding-block: 10px 6px; font-variant-numeric: tabular-nums; }
 .chip { background: #fff; color: var(--ink); border-radius: 999px; padding: 6px 12px; font: 900 1rem var(--font); display: flex; align-items: center; gap: 6px; box-shadow: 0 3px 0 rgba(0,0,0,.18); }
 .chip small { font-size: .7rem; color: var(--muted); font-weight: 800; }
 .chip.score { font-size: 1.25rem; margin-right: auto; }
@@ -104,6 +104,19 @@ form.card { display: grid; gap: 14px; }
 .key.ok { background: var(--green); color: #fff; box-shadow: 0 4px 0 var(--green-d); }
 .key.del { background: var(--coral); color: #fff; box-shadow: 0 4px 0 var(--coral-d); }
 
+/* дыбыс пен діріл ауыстырғыштары */
+.toggles { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.tgl { display: flex; align-items: center; gap: 8px; font: 800 .95rem var(--font); color: #fff; background: rgba(255,255,255,.12); border: 0; border-radius: 999px; padding: 8px 14px 8px 8px; cursor: pointer; }
+.tgl::before { content: ""; width: 36px; height: 22px; border-radius: 11px; background: rgba(255,255,255,.25) radial-gradient(circle at 11px 50%, #fff 8px, transparent 8.5px); transition: background .15s; }
+.tgl[aria-pressed="true"]::before { background: var(--green) radial-gradient(circle at 25px 50%, #fff 8px, transparent 8.5px); }
+.tgl:focus-visible, .chip.icon:focus-visible { outline: 3px solid var(--sun); outline-offset: 2px; }
+.chip.icon { border: 0; cursor: pointer; padding: 6px 9px; }
+.chip.icon svg { width: 20px; height: 20px; display: block; }
+.chip.icon .x { display: none; }
+.chip.icon.off { background: #d9d4ee; }
+.chip.icon.off .x { display: inline; }
+.chip.icon.off .waves { display: none; }
+
 /* нәтиже */
 .result { text-align: center; display: grid; gap: 10px; justify-items: center; }
 .avatar { width: 46px; height: 46px; border-radius: 50%; display: grid; place-content: center; font: 900 1.1rem var(--font); color: #fff; flex: none; box-shadow: 0 3px 0 rgba(0,0,0,.18); }
@@ -143,6 +156,10 @@ form.card { display: grid; gap: 14px; }
     <p class="err" id="intro-err"></p>
     <button class="btn" id="go" type="submit">Ойнау</button>
   </form>
+  <div class="toggles">
+    <button type="button" class="tgl" id="t-sfx" aria-pressed="true">Дыбыс</button>
+    <button type="button" class="tgl" id="t-vib" aria-pressed="true">Діріл</button>
+  </div>
   <ul class="rules">
     <li><i class="c1" style="background:var(--c)">1</i><span>Мысалдар құлайды. <b>Қызыл сызыққа</b> тигенше жауабын жазып, <b>OK</b> бас.</span></li>
     <li><i class="c0" style="background:var(--c)">−1</i><span>Ойын <b>90 секунд</b>. Қате жауап — <b>−1 ұпай</b>. Сызыққа тиген мысал өз ұпайын алып кетеді.</span></li>
@@ -157,6 +174,7 @@ form.card { display: grid; gap: 14px; }
     <span class="chip time" id="h-timechip"><small>УАҚЫТ</small><span id="h-time">90</span></span>
     <span class="chip"><small>ДЕҢГЕЙ</small><span id="h-level">1</span></span>
     <span class="chip combo"><small>КОМБО</small><span id="h-combo">×1</span></span>
+    <button type="button" class="chip icon" id="h-sfx" aria-label="Дыбысты қосу/өшіру"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#2a2150" d="M4 9h4l5-4v14l-5-4H4z"/><path class="waves" fill="none" stroke="#2a2150" stroke-width="2" stroke-linecap="round" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/><path class="x" stroke="#ff5c6a" stroke-width="2.4" stroke-linecap="round" d="M16 9l5 6M21 9l-5 6"/></svg></button>
   </div>
   <div class="tbar"><i id="h-tbar"></i></div>
   <div class="field" id="field"><div class="count" id="count" hidden></div></div>
@@ -196,6 +214,43 @@ const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 const show = id => document.querySelectorAll('body > .screen').forEach(s => s.hidden = s.id !== id);
 const store = { get(k) { try { return localStorage.getItem(k) || ''; } catch { return ''; } },
                 set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+// ---------- дыбыс (Web Audio, файлсыз) және діріл ----------
+const SFX = (() => {
+  let ctx = null, on = store.get('sfx') !== '0', vib = store.get('vib') !== '0';
+  const canVib = 'vibrate' in navigator;
+  function ensure() {
+    if (!on) return null;
+    if (!ctx) { try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch { return null; } }
+    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+    return ctx;
+  }
+  function tone(freq, dur, { type = 'sine', vol = .2, at = 0, slide = 0 } = {}) {
+    const c = ensure(); if (!c) return;
+    const t = c.currentTime + at, o = c.createOscillator(), g = c.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, t);
+    if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(c.destination); o.start(t); o.stop(t + dur + 0.03);
+  }
+  const buzz = p => { if (vib && canVib) try { navigator.vibrate(p); } catch {} };
+  const melody = (notes, step, dur, type = 'triangle', vol = .15) => notes.forEach((f, i) => tone(f, dur, { type, vol, at: i * step }));
+  return {
+    canVib, unlock: ensure,
+    get on() { return on; }, get vib() { return vib; },
+    setOn(v) { on = v; store.set('sfx', v ? '1' : '0'); if (v) { ensure(); tone(660, .08, { type: 'triangle', vol: .12 }); } },
+    setVib(v) { vib = v; store.set('vib', v ? '1' : '0'); buzz(40); },
+    key()     { tone(700, .035, { type: 'triangle', vol: .05 }); buzz(8); },
+    correct(n){ const f = 523 * Math.pow(2, Math.min(n, 12) / 12); tone(f, .09, { type: 'triangle', vol: .18 }); tone(f * 1.5, .15, { type: 'triangle', vol: .15, at: .07 }); buzz(15); },
+    combo()   { melody([523, 659, 784, 1047], .08, .13); buzz([30, 40, 30, 40, 70]); },
+    gold()    { melody([880, 1175, 1397, 1760, 2093], .05, .12, 'sine', .14); buzz([20, 30, 20, 30, 90]); },
+    wrong()   { tone(190, .22, { type: 'sawtooth', vol: .1, slide: 110 }); buzz(70); },
+    miss()    { tone(150, .32, { type: 'square', vol: .08, slide: 70 }); buzz([90, 40, 90]); },
+    count(go) { tone(go ? 880 : 440, go ? .25 : .14, { type: 'sine', vol: .2 }); buzz(go ? 60 : 25); },
+    tick()    { tone(1100, .04, { type: 'square', vol: .04 }); buzz(12); },
+    end()     { melody([784, 659, 523, 659, 784, 1047], .11, .17); buzz([60, 50, 140]); },
+  };
+})();
+
 // аватар: аты-жөнінің бас әріптері, түсі атқа байланысты
 const AV = ['#ff5c6a', '#2fa6ff', '#1fc98b', '#ffb21f', '#9a5cff', '#ff5fb0', '#00b8c4', '#ff8a3d'];
 const initials = n => n.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
@@ -206,6 +261,16 @@ const avatar = (name, key) => `<span class="avatar" style="background:${avColor(
 const player = { name: '', cls: '' };
 $('name').value = store.get('blitz-name');
 $('cls').value = store.get('blitz-cls');
+function syncToggles() {
+  $('t-sfx').setAttribute('aria-pressed', SFX.on);
+  $('t-vib').setAttribute('aria-pressed', SFX.vib);
+  $('h-sfx').classList.toggle('off', !SFX.on);
+}
+if (!SFX.canVib) $('t-vib').hidden = true;     // iPhone-да діріл жоқ
+$('t-sfx').onclick = () => { SFX.setOn(!SFX.on); syncToggles(); };
+$('t-vib').onclick = () => { SFX.setVib(!SFX.vib); syncToggles(); };
+$('h-sfx').onclick = () => { SFX.setOn(!SFX.on); syncToggles(); };
+syncToggles();
 
 async function api(path, body) {
   const r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -242,6 +307,7 @@ $('change').onclick = () => { $('intro-err').textContent = ''; show('s-intro'); 
 $('again').onclick = () => start($('e-err'));
 
 async function start(errEl) {
+  SFX.unlock();                     // дыбысты батырма басылған сәтте ашамыз (браузер талабы)
   errEl.textContent = '';
   let id;
   try { ({ id } = await api('/api/fall/start', player)); }
@@ -251,8 +317,8 @@ async function start(errEl) {
   G = { id, drops: [], score: 0, combo: 0, wrong: 0, solved: 0, input: '', time: 0, spawnIn: 0, running: false, last: 0, color: rnd(0, 5) };
   renderHud(); $('typed').textContent = '';
   const c = $('count'); c.hidden = false;
-  for (const n of [3, 2, 1]) { c.innerHTML = `<span>${n}</span>`; await new Promise(r => setTimeout(r, 600)); }
-  c.hidden = true;
+  for (const n of [3, 2, 1]) { c.innerHTML = `<span>${n}</span>`; SFX.count(false); await new Promise(r => setTimeout(r, 600)); }
+  c.hidden = true; SFX.count(true);
   G.running = true; G.last = performance.now();
   requestAnimationFrame(loop);
 }
@@ -297,6 +363,8 @@ function loop(now) {
     if (d.y + d.el.offsetHeight >= floor) miss(d);
   }
   if (G.time >= GAME_SEC) return gameOver();
+  const secLeft = Math.ceil(GAME_SEC - G.time);
+  if (secLeft <= 5 && secLeft !== G.lastTick) { G.lastTick = secLeft; SFX.tick(); }
   renderHud();
   requestAnimationFrame(loop);
 }
@@ -308,7 +376,7 @@ function miss(d) {
   removeDrop(d);
   const f = $('floor'); f.classList.add('hit'); setTimeout(() => f.classList.remove('hit'), 200);
   const fld = $('field'); fld.classList.remove('shake'); void fld.offsetWidth; fld.classList.add('shake');
-  if (navigator.vibrate) try { navigator.vibrate(80); } catch {}
+  SFX.miss();
 }
 function burst(d) {
   const f = $('field'), cx = d.x + d.w / 2, cy = d.y + d.el.offsetHeight / 2;
@@ -346,7 +414,7 @@ function submit() {
   G.input = ''; $('typed').textContent = '';
   if (!hits.length) {                                     // қате жауап: −1 ұпай, комбо нөлге түседі
     G.score = Math.max(0, G.score - 1); G.combo = 0; G.wrong++;
-    flashTyped('bad'); negPop($('field').clientWidth / 2 - 14, $('field').clientHeight - 40, '−1'); renderHud(); return;
+    SFX.wrong(); flashTyped('bad'); negPop($('field').clientWidth / 2 - 14, $('field').clientHeight - 40, '−1'); renderHud(); return;
   }
   const d = hits[0];
   G.combo++; G.solved++;
@@ -355,16 +423,20 @@ function submit() {
   burst(d); popText(d, '+' + gain); removeDrop(d);
   if (d.gold) {
     for (const o of [...G.drops]) { G.score += o.points; G.solved++; burst(o); popText(o, '+' + o.points); removeDrop(o); }
-    praise('Алтын мысал!', 'Экран тазаланды');
-  } else if (G.combo === 5) praise('Қатарынан 5!', 'Ұпай ×2');
-  else if (G.combo === 10) praise('Қатарынан 10!', 'Ұпай ×3');
-  else if (G.combo > 10 && G.combo % 10 === 0) praise(`Қатарынан ${G.combo}!`, 'Тоқтама!');
-  else if (Math.random() < 0.12) praise(PRAISE[rnd(0, PRAISE.length - 1)]);
+    praise('Алтын мысал!', 'Экран тазаланды'); SFX.gold();
+  } else if (G.combo === 5) { praise('Қатарынан 5!', 'Ұпай ×2'); SFX.combo(); }
+  else if (G.combo === 10) { praise('Қатарынан 10!', 'Ұпай ×3'); SFX.combo(); }
+  else if (G.combo > 10 && G.combo % 10 === 0) { praise(`Қатарынан ${G.combo}!`, 'Тоқтама!'); SFX.combo(); }
+  else {
+    SFX.correct(G.combo);
+    if (Math.random() < 0.12) praise(PRAISE[rnd(0, PRAISE.length - 1)]);
+  }
   flashTyped('good'); renderHud();
 }
 function press(k) {
   if (!G || !G.running) return;
   if (k === 'ok') return submit();
+  SFX.key();
   if (k === 'del') G.input = G.input.slice(0, -1);
   else if (G.input.length < 5) G.input += k;
   $('typed').textContent = G.input;
@@ -386,6 +458,7 @@ function resultTitle(score) {
 async function gameOver() {
   const g = G; G.running = false; G = null;
   document.querySelectorAll('.drop, .praise').forEach(n => n.remove());
+  SFX.end();
   show('s-end');
   $('e-avatar').textContent = initials(player.name);
   $('e-avatar').style.background = avColor(player.cls + '|' + player.name);
