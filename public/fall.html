@@ -429,6 +429,10 @@ function spawn() {
   el.style.transform = `translate(${x}px, ${d.y}px)`;
   G.drops.push(d);
 }
+// ---------- соңына қарай жылдамдау ----------
+const RUSH_SEC = 30;                                    // соңғы 30 секундта жылдамдық күрт өседі
+const rush = () => { const left = GAME_SEC + G.extra - G.time; return left >= RUSH_SEC ? 0 : Math.min(1, (RUSH_SEC - left) / RUSH_SEC); };
+const speedMul = () => { const r = rush(); return 1 + 1.3 * r * r; };     // соңында ≈ ×2.3
 function loop(now) {
   if (!G || !G.running) return;
   const dt = Math.min(0.05, (now - G.last) / 1000); G.last = now;
@@ -437,11 +441,11 @@ function loop(now) {
   if (frozen) { G.frozen -= dt; if (G.frozen <= 0) $('field').classList.remove('frozen'); }
   else {
     G.spawnIn -= dt;
-    if (G.spawnIn <= 0) { spawn(); G.spawnIn = Math.max(1.0, 3.2 - G.time * 0.022); }
+    if (G.spawnIn <= 0) { spawn(); G.spawnIn = Math.max(1.0, 3.2 - G.time * 0.022) * (1 - 0.45 * rush()); }
   }
   const floor = $('field').clientHeight;
   for (const d of [...G.drops]) {
-    if (!frozen) d.y += d.speed * dt;
+    if (!frozen) d.y += d.speed * speedMul() * dt;
     d.el.style.transform = `translate(${d.x}px, ${d.y}px)`;
     d.el.classList.toggle('danger', (!d.kind || d.kind === 'trap') && d.y > floor * 0.65);
     if (d.y + d.el.offsetHeight >= floor) miss(d);
@@ -449,6 +453,8 @@ function loop(now) {
   if (G.time >= GAME_SEC + G.extra) return gameOver();
   const secLeft = Math.ceil(GAME_SEC + G.extra - G.time);
   if (secLeft <= 5 && secLeft !== G.lastTick) { G.lastTick = secLeft; SFX.tick(); }
+  if (secLeft <= RUSH_SEC && !G.rushSaid) { G.rushSaid = true; praise('Жылдамдық артты!', `Соңғы ${RUSH_SEC} секунд`); SFX.bonus(); }
+  if (secLeft <= 10 && !G.lastSaid) { G.lastSaid = true; praise('Соңғы 10 секунд!', 'Барынша жылдам!'); }
   renderHud();
   requestAnimationFrame(loop);
 }
