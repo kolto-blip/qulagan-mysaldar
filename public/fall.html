@@ -74,6 +74,17 @@ form.card { display: grid; gap: 14px; }
 @keyframes pulse { to { box-shadow: 0 4px 0 var(--cd), 0 0 0 4px rgba(255,92,106,.85); } }
 .drop.gold { --c: linear-gradient(180deg, #ffd54a, #ffab00); --cd: #b87700; color: #4a3000; }
 .drop.gold::after { content: "×3"; font-size: .6em; margin-left: 6px; vertical-align: super; }
+/* бонус плиткалары: үстінде белгісі бар */
+.drop[data-badge]::before { content: attr(data-badge); position: absolute; top: -13px; left: 50%; transform: translateX(-50%); white-space: nowrap;
+  font: 900 .62rem/1 var(--font); letter-spacing: .05em; padding: 4px 8px; border-radius: 999px; background: #fff; color: var(--ink); box-shadow: 0 2px 0 rgba(0,0,0,.2); }
+.drop.bomb { --c: #231a47; --cd: #000; color: #fff; outline: 3px solid var(--coral); }
+.drop.bomb::before { background: var(--coral); color: #fff; }
+.drop.freeze { --c: linear-gradient(180deg, #c9f3ff, #62c9ff); --cd: #2a8fc4; color: #08304a; }
+.drop.time { --c: linear-gradient(180deg, #b6ffd9, #1fc98b); --cd: #13996a; color: #053d27; }
+.drop.trap { --c: repeating-linear-gradient(-45deg, #ff5c6a 0 10px, #b8303d 10px 20px); --cd: #6e1a23; }
+.drop.trap::before { background: #231a47; color: #ffd0d4; }
+.field.frozen { background: rgba(159, 227, 255, .14); box-shadow: inset 0 0 0 4px rgba(159, 227, 255, .8); border-radius: 14px; }
+.field.frozen .drop { filter: saturate(.6) brightness(1.15); }
 .c0 { --c: var(--coral); --cd: var(--coral-d); } .c1 { --c: var(--sky); --cd: var(--sky-d); } .c2 { --c: var(--green); --cd: var(--green-d); }
 .c3 { --c: var(--sun); --cd: var(--sun-d); } .c4 { --c: var(--violet); --cd: var(--violet-d); } .c5 { --c: var(--pink); --cd: var(--pink-d); }
 .puff { position: absolute; width: 9px; height: 9px; border-radius: 3px; background: var(--pc, #fff); pointer-events: none; animation: puff .6s ease-out forwards; }
@@ -97,11 +108,14 @@ form.card { display: grid; gap: 14px; }
 .typed.good { border-color: var(--green); }
 .typed.bad { border-color: var(--coral); animation: shake .25s; }
 @keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
-.pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+.pad { display: grid; grid-template-columns: repeat(3, 1fr) .9fr; gap: 8px; margin-top: 10px; }
+.key.ok { grid-row: 3 / span 2; grid-column: 4; }
+.key.zero { grid-column: 1 / span 3; }
+.key.minus { background: var(--violet); color: #fff; box-shadow: 0 4px 0 var(--violet-d); }
 .key { font: 900 1.6rem var(--font); padding: 10px 0; border-radius: 14px; border: 0; cursor: pointer; background: #fff; color: var(--ink);
   box-shadow: 0 4px 0 #c9c2ea; touch-action: manipulation; user-select: none; }
 .key:active { transform: translateY(3px); box-shadow: 0 1px 0 #c9c2ea; }
-.key.ok { background: var(--green); color: #fff; box-shadow: 0 4px 0 var(--green-d); }
+.key.ok { font-size: 1.4rem; background: var(--green); color: #fff; box-shadow: 0 4px 0 var(--green-d); }
 .key.del { background: var(--coral); color: #fff; box-shadow: 0 4px 0 var(--coral-d); }
 
 /* дыбыс пен діріл ауыстырғыштары */
@@ -148,7 +162,7 @@ form.card { display: grid; gap: 14px; }
   <div class="logo">
     <div class="tiles" aria-hidden="true"><i class="c0" style="background:var(--c)">+</i><i class="c1" style="background:var(--c)">−</i><i class="c2" style="background:var(--c)">×</i><i class="c3" style="background:var(--c)">÷</i></div>
     <h1>Құлаған мысалдар</h1>
-    <p>Ұпай жина, сыныбыңды бірінші орынға шығар!</p>
+    <p>7–9 сыныптар · ұпай жина, сыныбыңды бірінші орынға шығар!</p>
   </div>
   <form id="reg" class="card">
     <label for="name">Атың және тегіңнің бірінші әрпі<input id="name" autocomplete="off" maxlength="24" placeholder="Айгерім Қ."></label>
@@ -161,10 +175,12 @@ form.card { display: grid; gap: 14px; }
     <button type="button" class="tgl" id="t-vib" aria-pressed="true">Діріл</button>
   </div>
   <ul class="rules">
-    <li><i class="c1" style="background:var(--c)">1</i><span>Мысалдар құлайды. <b>Қызыл сызыққа</b> тигенше жауабын жазып, <b>OK</b> бас.</span></li>
+    <li><i class="c1" style="background:var(--c)">1</i><span>Мысалдар құлайды. <b>Қызыл сызыққа</b> тигенше жауабын жазып, <b>OK</b> бас. Теріс жауап үшін <b>−</b> батырмасы.</span></li>
+    <li><i class="c4" style="background:var(--c)">x</i><span>Теңдеуде жауап — <b>x</b>-тің мәні. Мысалы, 3x + 5 = 20 → <b>5</b>.</span></li>
     <li><i class="c0" style="background:var(--c)">−1</i><span>Ойын <b>90 секунд</b>. Қате жауап — <b>−1 ұпай</b>. Сызыққа тиген мысал өз ұпайын алып кетеді.</span></li>
     <li><i class="c3" style="background:var(--c)">×2</i><span>Қатарынан 5 дұрыс жауап — <b>×2</b>, 10 жауап — <b>×3</b> ұпай.</span></li>
-    <li><i class="c5" style="background:var(--c)">★</i><span><b>Алтын мысал</b> ×3 ұпай береді және экранды тазалайды.</span></li>
+    <li><i class="c5" style="background:var(--c)">★</i><span><b>Бонустар</b> (мысалын шеш): <b>+10 с</b> уақыт қосады, <b>МҰЗ</b> бәрін 4 секунд тоқтатады, <b>БОМБА</b> экрандағының бәрін жарады, <b>АЛТЫН</b> ×3 ұпай.</span></li>
+    <li><i class="c0" style="background:var(--c)">!</i><span><b>ҚАУІП</b> плиткасы сызыққа тисе <b>−5</b>. Шешсең — ×2 ұпай.</span></li>
   </ul>
 </section>
 
@@ -181,10 +197,10 @@ form.card { display: grid; gap: 14px; }
   <div class="floor" id="floor"></div>
   <div class="typed" id="typed" aria-live="polite"></div>
   <div class="pad" id="pad">
-    <button class="key" data-k="1">1</button><button class="key" data-k="2">2</button><button class="key" data-k="3">3</button>
-    <button class="key" data-k="4">4</button><button class="key" data-k="5">5</button><button class="key" data-k="6">6</button>
-    <button class="key" data-k="7">7</button><button class="key" data-k="8">8</button><button class="key" data-k="9">9</button>
-    <button class="key del" data-k="del" aria-label="Өшіру">⌫</button><button class="key" data-k="0">0</button><button class="key ok" data-k="ok">OK</button>
+    <button class="key" data-k="1">1</button><button class="key" data-k="2">2</button><button class="key" data-k="3">3</button><button class="key del" data-k="del" aria-label="Өшіру">⌫</button>
+    <button class="key" data-k="4">4</button><button class="key" data-k="5">5</button><button class="key" data-k="6">6</button><button class="key minus" data-k="neg" aria-label="Минус">−</button>
+    <button class="key" data-k="7">7</button><button class="key" data-k="8">8</button><button class="key" data-k="9">9</button><button class="key ok" data-k="ok">OK</button>
+    <button class="key zero" data-k="0">0</button>
   </div>
 </section>
 
@@ -247,6 +263,9 @@ const SFX = (() => {
     miss()    { tone(150, .32, { type: 'square', vol: .08, slide: 70 }); buzz([90, 40, 90]); },
     count(go) { tone(go ? 880 : 440, go ? .25 : .14, { type: 'sine', vol: .2 }); buzz(go ? 60 : 25); },
     tick()    { tone(1100, .04, { type: 'square', vol: .04 }); buzz(12); },
+    boom()    { tone(110, .45, { type: 'sawtooth', vol: .16, slide: 35 }); melody([523, 784, 1047], .06, .12, 'triangle', .12); buzz([40, 30, 120]); },
+    freeze()  { melody([2093, 1760, 1397, 1175], .06, .14, 'sine', .12); buzz([20, 40, 20]); },
+    bonus()   { melody([523, 659, 784, 1047, 1319], .05, .1, 'triangle', .14); buzz([20, 30, 60]); },
     end()     { melody([784, 659, 523, 659, 784, 1047], .11, .17); buzz([60, 50, 140]); },
   };
 })();
@@ -279,16 +298,60 @@ async function api(path, body) {
   return j;
 }
 
+// ---------- 7–9 сыныптарға арналған мысалдар ----------
+const pick = arr => arr[rnd(0, arr.length - 1)];
+const sgn = () => Math.random() < .5 ? -1 : 1;
+const num = n => n < 0 ? '−' + (-n) : String(n);               // −7
+const par = n => n < 0 ? '(−' + (-n) + ')' : String(n);         // (−7)
+const SUP = { 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶' };
+const FR = [[1, 2, '½'], [1, 3, '⅓'], [2, 3, '⅔'], [1, 4, '¼'], [3, 4, '¾'], [1, 5, '⅕'], [2, 5, '⅖'], [3, 5, '⅗'], [4, 5, '⅘']];
+const gcd = (a, b) => b ? gcd(b, a % b) : a;
+const GEN = {
+  // бүтін сандар: қосу/азайту, жауабы теріс болуы мүмкін
+  addsub(big) { const a = rnd(-big, big) || 4, b = rnd(2, big); return Math.random() < .5 ? [`${num(a)} + ${b}`, a + b] : [`${num(a)} − ${b}`, a - b]; },
+  // теріс сандарды көбейту/бөлу
+  muldiv(big) {
+    const a = rnd(2, big) * sgn(), b = rnd(2, 9) * sgn();
+    return Math.random() < .5 ? [`${par(a)} × ${par(b)}`, a * b] : [`${num(a * b)} ÷ ${par(b)}`, a];
+  },
+  square() { const b = rnd(4, 20); return [`${b}²`, b * b]; },
+  power(hard) {
+    if (hard && Math.random() < .5) { const b = -rnd(2, 4), e = b === -2 ? pick([3, 4, 5]) : pick([2, 3]); return [`(−${-b})${SUP[e]}`, b ** e]; }
+    const b = rnd(2, 5), e = b === 2 ? rnd(3, 6) : b === 3 ? pick([3, 4]) : 3; return [`${b}${SUP[e]}`, b ** e];
+  },
+  root() { const r = rnd(3, 20); return [`√${r * r}`, r]; },
+  // амалдардың орындалу реті
+  order(hard) {
+    const a = rnd(2, 20), b = rnd(2, 9), c = rnd(2, 9), d = rnd(2, 9);
+    const v = [
+      () => [`${a} + ${b} × ${c}`, a + b * c],
+      () => [`(${b} − ${a}) × ${c}`, (b - a) * c],
+      () => [`${b} × ${c} − ${a}`, b * c - a],
+      () => [`${a} − ${b} × ${c}`, a - b * c],
+    ];
+    if (hard) v.push(() => [`${b}² − ${c} × ${d}`, b * b - c * d], () => [`${b} × ${c} − ${d} × ${a}`, b * c - d * a]);
+    return pick(v)();
+  },
+  // пайыз: жауабы әрқашан бүтін сан
+  percent() { const p = pick([5, 10, 15, 20, 25, 30, 40, 50, 75]); const base = (100 / gcd(p, 100)) * rnd(1, 12); return [`${p}% · ${base}`, base * p / 100]; },
+  fraction() { const [n, d, f] = pick(FR); const base = d * rnd(2, 16); return [`${f} · ${base}`, base / d * n]; },
+  // теңдеу: жауабы — x
+  equation(hard) {
+    const x = hard ? rnd(-9, 12) || 3 : rnd(1, 12), a = rnd(2, hard ? 9 : 6);
+    let b = rnd(hard ? -20 : 1, 20) || 5; const c = a * x + b;
+    return [`${a}x ${b < 0 ? '−' : '+'} ${Math.abs(b)} = ${num(c)}`, x];
+  },
+};
+const LEVELS = {
+  1: () => pick([() => GEN.addsub(20), () => GEN.muldiv(9)])(),
+  2: () => pick([() => GEN.muldiv(12), GEN.square, GEN.root, () => GEN.order(false), () => GEN.addsub(50)])(),
+  3: () => pick([GEN.percent, GEN.fraction, () => GEN.power(false), () => GEN.order(false), GEN.square])(),
+  4: () => pick([() => GEN.equation(false), () => GEN.order(true), GEN.percent, () => GEN.power(true), GEN.fraction])(),
+  5: () => pick([() => GEN.equation(true), () => GEN.equation(true), () => GEN.order(true), () => GEN.power(true), GEN.percent, GEN.root])(),
+};
 function makeQuestion(level) {
-  const kinds = level === 1 ? ['+', '-'] : level === 2 ? ['+', '-', '×'] : ['+', '-', '×', '÷'];
-  const k = kinds[rnd(0, kinds.length - 1)];
-  const big = [0, 20, 50, 100, 200, 500][level], tbl = [0, 5, 9, 9, 12, 15][level];
-  let a, b, ans;
-  if (k === '+') { a = rnd(2, big); b = rnd(2, big); ans = a + b; }
-  else if (k === '-') { a = rnd(5, big); b = rnd(1, a); ans = a - b; }
-  else if (k === '×') { a = rnd(2, tbl); b = rnd(2, level >= 4 ? 19 : 9); ans = a * b; }
-  else { b = rnd(2, tbl); ans = rnd(2, level >= 4 ? 15 : 9); a = b * ans; }
-  return { text: `${a} ${k === '-' ? '−' : k} ${b}`, ans, points: level };
+  const [text, ans] = LEVELS[level]();
+  return { text, ans, points: level };
 }
 
 const GAME_SEC = 90;      // ойын ұзақтығы, секунд
@@ -314,7 +377,7 @@ async function start(errEl) {
   catch (e) { errEl.textContent = e.message; return; }
   show('s-game');
   document.querySelectorAll('.drop, .puff, .pop, .praise').forEach(n => n.remove());
-  G = { id, drops: [], score: 0, combo: 0, wrong: 0, solved: 0, input: '', time: 0, spawnIn: 0, running: false, last: 0, color: rnd(0, 5) };
+  G = { id, drops: [], score: 0, combo: 0, wrong: 0, extra: 0, frozen: 0, solved: 0, input: '', time: 0, spawnIn: 0, running: false, last: 0, color: rnd(0, 5) };
   renderHud(); $('typed').textContent = '';
   const c = $('count'); c.hidden = false;
   for (const n of [3, 2, 1]) { c.innerHTML = `<span>${n}</span>`; SFX.count(false); await new Promise(r => setTimeout(r, 600)); }
@@ -325,54 +388,75 @@ async function start(errEl) {
 const level = () => Math.min(5, 1 + Math.floor(G.time / 18));   // әр 18 секунд сайын қиындайды
 const mult = () => G.combo >= 10 ? 3 : G.combo >= 5 ? 2 : 1;
 function renderHud() {
-  const left = Math.max(0, GAME_SEC - G.time);
+  const total = GAME_SEC + G.extra, left = Math.max(0, total - G.time);
   $('h-score').textContent = G.score;
   $('h-level').textContent = level();
   $('h-combo').textContent = '×' + mult();
   $('h-time').textContent = Math.ceil(left);
   $('h-timechip').classList.toggle('low', left <= 10);
-  $('h-tbar').style.transform = `scaleX(${left / GAME_SEC})`;
+  $('h-tbar').style.transform = `scaleX(${Math.min(1, left / GAME_SEC)})`;
+}
+// ---------- бонустар ----------
+const BADGE = { bomb: 'БОМБА', freeze: 'МҰЗ · 4 с', time: '+10 с', trap: 'ҚАУІП', gold: 'АЛТЫН' };
+const KIND_COLOR = { gold: '#ffc531', bomb: '#ff5c6a', freeze: '#9fe3ff', time: '#1fc98b', trap: '#ff5c6a' };
+function pickKind() {
+  if (G.time < 8) return '';
+  const on = k => G.drops.some(d => d.kind === k);            // бір түрдің бір ғана плиткасы
+  const r = Math.random();
+  if (r < .05) return on('gold') ? '' : 'gold';
+  if (r < .09) return on('bomb') ? '' : 'bomb';
+  if (r < .13) return on('freeze') || G.frozen > 0 ? '' : 'freeze';
+  if (r < .17) return on('time') || G.extra >= 30 ? '' : 'time';
+  if (r < .23 && level() >= 2) return on('trap') ? '' : 'trap';
+  return '';
 }
 function spawn() {
   const field = $('field'), W = field.clientWidth, lv = level();
   let q, tries = 0;
   do { q = makeQuestion(Math.random() < 0.25 && lv > 1 ? lv - 1 : lv); tries++; } while (G.drops.some(d => d.ans === q.ans) && tries < 10);
   const el = document.createElement('div');
-  const gold = G.time > 15 && Math.random() < 0.06;
+  const kind = pickKind();
+  const gold = kind === 'gold';
   G.color = (G.color + rnd(1, 5)) % 6;                       // көрші плиткалардың түсі әртүрлі
-  el.className = 'drop ' + (gold ? 'gold' : 'c' + G.color);
+  el.className = 'drop ' + (kind || 'c' + G.color);
+  if (BADGE[kind]) el.dataset.badge = BADGE[kind];
   el.textContent = q.text; field.appendChild(el);
   const w = el.offsetWidth;
   let x, ok, n = 0;
   do { x = rnd(4, Math.max(4, W - w - 4)); ok = !G.drops.some(d => d.y < 70 && Math.abs(d.x - x) < Math.max(w, d.w) + 8); n++; } while (!ok && n < 15);
-  const speed = (30 + G.time * 0.8 + rnd(0, 12)) * (field.clientHeight / 600) * (gold ? 0.85 : 1);
-  const d = { ...q, el, x, y: -50, w, speed, gold, color: gold ? '#ffc531' : getComputedStyle(el).getPropertyValue('--c') || '#fff' };
+  const speed = (30 + G.time * 0.8 + rnd(0, 12)) * (field.clientHeight / 600) * (kind && kind !== 'trap' ? 0.85 : 1);
+  const d = { ...q, el, x, y: -50, w, speed, gold, kind, color: KIND_COLOR[kind] || getComputedStyle(el).getPropertyValue('--c') || '#fff' };
   el.style.transform = `translate(${x}px, ${d.y}px)`;
   G.drops.push(d);
 }
 function loop(now) {
   if (!G || !G.running) return;
   const dt = Math.min(0.05, (now - G.last) / 1000); G.last = now;
-  G.time += dt; G.spawnIn -= dt;
-  if (G.spawnIn <= 0) { spawn(); G.spawnIn = Math.max(1.0, 3.2 - G.time * 0.022); }
+  G.time += dt;
+  const frozen = G.frozen > 0;
+  if (frozen) { G.frozen -= dt; if (G.frozen <= 0) $('field').classList.remove('frozen'); }
+  else {
+    G.spawnIn -= dt;
+    if (G.spawnIn <= 0) { spawn(); G.spawnIn = Math.max(1.0, 3.2 - G.time * 0.022); }
+  }
   const floor = $('field').clientHeight;
   for (const d of [...G.drops]) {
-    d.y += d.speed * dt;
+    if (!frozen) d.y += d.speed * dt;
     d.el.style.transform = `translate(${d.x}px, ${d.y}px)`;
-    d.el.classList.toggle('danger', !d.gold && d.y > floor * 0.65);
+    d.el.classList.toggle('danger', (!d.kind || d.kind === 'trap') && d.y > floor * 0.65);
     if (d.y + d.el.offsetHeight >= floor) miss(d);
   }
-  if (G.time >= GAME_SEC) return gameOver();
-  const secLeft = Math.ceil(GAME_SEC - G.time);
+  if (G.time >= GAME_SEC + G.extra) return gameOver();
+  const secLeft = Math.ceil(GAME_SEC + G.extra - G.time);
   if (secLeft <= 5 && secLeft !== G.lastTick) { G.lastTick = secLeft; SFX.tick(); }
   renderHud();
   requestAnimationFrame(loop);
 }
 function removeDrop(d) { d.el.remove(); G.drops = G.drops.filter(x => x !== d); }
 function miss(d) {
-  const lost = Math.min(G.score, d.points);              // мысал өз ұпайын алып кетеді (0-ден төмен түспейді)
-  G.score -= lost; G.combo = 0;
-  negPop(d.x, $('field').clientHeight - 40, '−' + d.points);
+  const pen = d.kind === 'trap' ? 5 : d.points;          // мысал өз ұпайын алып кетеді, ҚАУІП −5 (0-ден төмен түспейді)
+  G.score -= Math.min(G.score, pen); G.combo = 0;
+  negPop(d.x, $('field').clientHeight - 40, '−' + pen);
   removeDrop(d);
   const f = $('floor'); f.classList.add('hit'); setTimeout(() => f.classList.remove('hit'), 200);
   const fld = $('field'); fld.classList.remove('shake'); void fld.offsetWidth; fld.classList.add('shake');
@@ -408,7 +492,7 @@ function praise(text, sub) {
 }
 function flashTyped(cls) { const t = $('typed'); t.classList.remove('good', 'bad'); void t.offsetWidth; t.classList.add(cls); setTimeout(() => t.classList.remove(cls), 300); }
 function submit() {
-  if (!G.input) return;
+  if (!G.input || G.input === '-') return;
   const v = Number(G.input);
   const hits = G.drops.filter(d => d.ans === v).sort((a, b) => b.y - a.y);
   G.input = ''; $('typed').textContent = '';
@@ -418,13 +502,22 @@ function submit() {
   }
   const d = hits[0];
   G.combo++; G.solved++;
-  const gain = d.points * mult() * (d.gold ? 3 : 1);
+  const gain = d.points * mult() * (d.kind === 'gold' ? 3 : d.kind === 'trap' ? 2 : 1);
   G.score += gain;
   burst(d); popText(d, '+' + gain); removeDrop(d);
-  if (d.gold) {
+  if (d.kind === 'bomb') {
     for (const o of [...G.drops]) { G.score += o.points; G.solved++; burst(o); popText(o, '+' + o.points); removeDrop(o); }
-    praise('Алтын мысал!', 'Экран тазаланды'); SFX.gold();
-  } else if (G.combo === 5) { praise('Қатарынан 5!', 'Ұпай ×2'); SFX.combo(); }
+    const f = $('field'); f.classList.remove('shake'); void f.offsetWidth; f.classList.add('shake');
+    praise('БОМБА!', 'Экрандағының бәрі жарылды'); SFX.boom();
+  } else if (d.kind === 'freeze') {
+    G.frozen = 4; $('field').classList.add('frozen');
+    praise('МҰЗ!', '4 секунд бәрі тоқтайды'); SFX.freeze();
+  } else if (d.kind === 'time') {
+    G.extra = Math.min(30, G.extra + 10);
+    praise('+10 секунд!', 'Уақыт қосылды'); SFX.bonus();
+  } else if (d.kind === 'gold') { praise('Алтын мысал!', `×3 ұпай: +${gain}`); SFX.gold(); }
+  else if (d.kind === 'trap') { praise('Қауіп жойылды!', `×2 ұпай: +${gain}`); SFX.bonus(); }
+  else if (G.combo === 5) { praise('Қатарынан 5!', 'Ұпай ×2'); SFX.combo(); }
   else if (G.combo === 10) { praise('Қатарынан 10!', 'Ұпай ×3'); SFX.combo(); }
   else if (G.combo > 10 && G.combo % 10 === 0) { praise(`Қатарынан ${G.combo}!`, 'Тоқтама!'); SFX.combo(); }
   else {
@@ -438,14 +531,16 @@ function press(k) {
   if (k === 'ok') return submit();
   SFX.key();
   if (k === 'del') G.input = G.input.slice(0, -1);
-  else if (G.input.length < 5) G.input += k;
-  $('typed').textContent = G.input;
+  else if (k === 'neg') G.input = G.input.startsWith('-') ? G.input.slice(1) : '-' + G.input;   // «−» белгіні қосады/алады
+  else if (G.input.replace('-', '').length < 5) G.input += k;
+  $('typed').textContent = G.input.replace('-', '−');
 }
 $('pad').addEventListener('pointerdown', e => { const b = e.target.closest('.key'); if (!b) return; e.preventDefault(); press(b.dataset.k); });
 document.addEventListener('keydown', e => {
   if ($('s-game').hidden) return;
   const m = /^(?:Digit|Numpad)(\d)$/.exec(e.code);
-  if (m) press(m[1]); else if (e.key === 'Backspace') press('del'); else if (e.key === 'Enter') press('ok'); else return;
+  if (m) press(m[1]); else if (e.key === 'Backspace') press('del'); else if (e.key === 'Enter') press('ok');
+  else if (e.code === 'Minus' || e.code === 'NumpadSubtract') press('neg'); else return;
   e.preventDefault();
 });
 
@@ -458,6 +553,7 @@ function resultTitle(score) {
 async function gameOver() {
   const g = G; G.running = false; G = null;
   document.querySelectorAll('.drop, .praise').forEach(n => n.remove());
+  $('field').classList.remove('frozen');
   SFX.end();
   show('s-end');
   $('e-avatar').textContent = initials(player.name);
