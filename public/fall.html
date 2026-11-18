@@ -70,6 +70,7 @@ form.card { display: grid; gap: 14px; }
 .field.shake { animation: shake .3s; }
 .drop { position: absolute; top: 0; left: 0; white-space: nowrap; font: 900 1.45rem/1 var(--font); color: #fff; padding: 10px 14px; border-radius: 14px;
   background: var(--c); box-shadow: 0 4px 0 var(--cd); font-variant-numeric: tabular-nums; will-change: transform; }
+.drop.long { font-size: 1.15rem; padding: 10px 11px; }
 .drop.danger { animation: pulse .5s ease-in-out infinite alternate; }
 @keyframes pulse { to { box-shadow: 0 4px 0 var(--cd), 0 0 0 4px rgba(255,92,106,.85); } }
 .drop.gold { --c: linear-gradient(180deg, #ffd54a, #ffab00); --cd: #b87700; color: #4a3000; }
@@ -176,7 +177,8 @@ form.card { display: grid; gap: 14px; }
   </div>
   <ul class="rules">
     <li><i class="c1" style="background:var(--c)">1</i><span>Мысалдар құлайды. <b>Қызыл сызыққа</b> тигенше жауабын жазып, <b>OK</b> бас. Теріс жауап үшін <b>−</b> батырмасы.</span></li>
-    <li><i class="c4" style="background:var(--c)">x</i><span>Теңдеуде жауап — <b>x</b>-тің мәні. Мысалы, 3x + 5 = 20 → <b>5</b>.</span></li>
+    <li><i class="c4" style="background:var(--c)">x</i><span>Теңдеуде жауап — <b>x</b>-тің мәні (3x + 5 = 20 → <b>5</b>), ал <b>?</b> тұрса — сол сан.</span></li>
+    <li><i class="c2" style="background:var(--c)">7</i><span>Мысалдар сыныбыңа сай: <b>7-сынып</b> — дәреже, бұрыштар, сызықтық функция, теңдеулер, қысқаша көбейту.</span></li>
     <li><i class="c0" style="background:var(--c)">−1</i><span>Ойын <b>90 секунд</b>. Қате жауап — <b>−1 ұпай</b>. Сызыққа тиген мысал өз ұпайын алып кетеді.</span></li>
     <li><i class="c3" style="background:var(--c)">×2</i><span>Қатарынан 5 дұрыс жауап — <b>×2</b>, 10 жауап — <b>×3</b> ұпай.</span></li>
     <li><i class="c5" style="background:var(--c)">★</i><span><b>Бонустар</b> (мысалын шеш): <b>+10 с</b> уақыт қосады, <b>МҰЗ</b> бәрін 4 секунд тоқтатады, <b>БОМБА</b> экрандағының бәрін жарады, <b>АЛТЫН</b> ×3 ұпай.</span></li>
@@ -303,7 +305,8 @@ const pick = arr => arr[rnd(0, arr.length - 1)];
 const sgn = () => Math.random() < .5 ? -1 : 1;
 const num = n => n < 0 ? '−' + (-n) : String(n);               // −7
 const par = n => n < 0 ? '(−' + (-n) + ')' : String(n);         // (−7)
-const SUP = { 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶' };
+const SUP = { 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶', 7: '⁷', 8: '⁸', 9: '⁹' };
+const sup = n => String(n).split('').map(d => '⁰¹²³⁴⁵⁶⁷⁸⁹'[d]).join('');   // 11 → ¹¹
 const FR = [[1, 2, '½'], [1, 3, '⅓'], [2, 3, '⅔'], [1, 4, '¼'], [3, 4, '¾'], [1, 5, '⅕'], [2, 5, '⅖'], [3, 5, '⅗'], [4, 5, '⅘']];
 const gcd = (a, b) => b ? gcd(b, a % b) : a;
 const GEN = {
@@ -349,8 +352,37 @@ const LEVELS = {
   4: () => pick([() => GEN.equation(false), () => GEN.order(true), GEN.percent, () => GEN.power(true), GEN.fraction])(),
   5: () => pick([() => GEN.equation(true), () => GEN.equation(true), () => GEN.order(true), () => GEN.power(true), GEN.percent, GEN.root])(),
 };
+// ---------- 7-сынып бағдарламасы (алгебра + геометрия) ----------
+const G7 = {
+  pow()     { const v = pick([[2, rnd(3, 7)], [3, rnd(2, 4)], [5, 3], [10, rnd(2, 4)], [-2, rnd(3, 5)], [-3, 3], [rnd(11, 15), 2]]); const [b, e] = v;
+              return [`${b < 0 ? '(−' + (-b) + ')' : b}${sup(e)}`, b ** e]; },
+  abs()     { const a = rnd(-15, 15) || -4, b = rnd(-12, 12) || 3; return Math.random() < .5 ? [`|${num(a)}| + |${num(b)}|`, Math.abs(a) + Math.abs(b)] : [`|${num(a)}| − |${num(b)}|`, Math.abs(a) - Math.abs(b)]; },
+  triangle(){ const a = rnd(30, 80), b = rnd(30, 100 - Math.min(a, 70)); return [`△ ${a}°, ${b}°, ?°`, 180 - a - b]; },
+  adjacent(){ const a = rnd(20, 160); return Math.random() < .6 ? [`∠ сыбайлас ${a}° → ?`, 180 - a] : [`∠ вертикал ${a}° → ?`, a]; },
+  rule()    { const m = rnd(2, 6), n = rnd(2, 6);
+              return pick([() => [`a${SUP[m]} · a${SUP[n]} = a?`, m + n], () => [`a${sup(m + n)} : a${SUP[n]} = a?`, m], () => [`(a${SUP[m]})${SUP[Math.min(n, 4)]} = a?`, m * Math.min(n, 4)]])(); },
+  eq1()     { const x = rnd(-9, 12) || 2, a = rnd(2, 9); return pick([() => [`x + ${a} = ${num(x + a)}`, x], () => [`${a}x = ${num(a * x)}`, x], () => [`x − ${a} = ${num(x - a)}`, x]])(); },
+  eq2()     { const x = rnd(-6, 12) || 3, a = rnd(2, 7), b = rnd(1, 15);
+              return pick([() => [`${a}x − ${b} = ${num(a * x - b)}`, x], () => [`${a}x + ${b} = ${num(a * x + b)}`, x], () => [`${a}(x − ${b % 6 + 1}) = ${num(a * (x - (b % 6 + 1)))}`, x]])(); },
+  eq3()     { const x = rnd(-10, 10) || -5, a = rnd(2, 4), b = rnd(1, 6), c = rnd(1, 9);   // a(x + b) = x + d
+              const d = a * (x + b) - x; return [`${a}(x + ${b}) = x ${d < 0 ? '−' : '+'} ${Math.abs(d)}`, x]; },
+  func()    { const k = rnd(-4, 5) || 2, b = rnd(-9, 9), x = rnd(-5, 6) || 3;
+              const kx = k === 1 ? 'x' : k === -1 ? '−x' : `${num(k)}x`;
+              return [`y = ${kx}${b ? (b < 0 ? ' − ' : ' + ') + Math.abs(b) : ''}; y(${num(x)}) = ?`, k * x + b]; },
+  fsu()     { const n = rnd(2, 9) * 10, d = rnd(1, 3);
+              return pick([() => [`${n + 1}²`, (n + 1) ** 2], () => [`${n - 1}²`, (n - 1) ** 2], () => [`${n - d} · ${n + d}`, n * n - d * d],
+                           () => { const a = rnd(11, 30), b = a - rnd(1, 4); return [`${a}² − ${b}²`, a * a - b * b]; }])(); },
+};
+const LEVELS7 = {
+  1: () => pick([G7.pow, G7.abs, G7.adjacent, G7.eq1])(),
+  2: () => pick([G7.rule, G7.triangle, G7.eq1, G7.pow, G7.abs])(),
+  3: () => pick([G7.eq2, G7.func, G7.rule, G7.triangle, G7.adjacent])(),
+  4: () => pick([G7.fsu, G7.eq2, G7.func, G7.pow])(),
+  5: () => pick([G7.eq3, G7.fsu, G7.func, G7.eq2])(),
+};
+const grade = () => parseInt(player.cls, 10) || 0;
 function makeQuestion(level) {
-  const [text, ans] = LEVELS[level]();
+  const [text, ans] = (grade() === 7 ? LEVELS7 : LEVELS)[level]();
   return { text, ans, points: level };
 }
 
@@ -420,7 +452,7 @@ function spawn() {
   G.color = (G.color + rnd(1, 5)) % 6;                       // көрші плиткалардың түсі әртүрлі
   el.className = 'drop ' + (kind || 'c' + G.color);
   if (BADGE[kind]) el.dataset.badge = BADGE[kind];
-  el.textContent = q.text; field.appendChild(el);
+  el.textContent = q.text; if (q.text.length > 13) el.classList.add('long'); field.appendChild(el);
   const w = el.offsetWidth;
   let x, ok, n = 0;
   do { x = rnd(4, Math.max(4, W - w - 4)); ok = !G.drops.some(d => d.y < 70 && Math.abs(d.x - x) < Math.max(w, d.w) + 8); n++; } while (!ok && n < 15);
