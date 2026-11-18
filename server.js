@@ -163,7 +163,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (p === '/api/qr.svg') {
-    const svg = await QRCode.toString(joinUrl(req), { type: 'svg', margin: 1, color: { dark: '#10261c', light: '#ffffff' } });
+    const svg = await QRCode.toString(joinUrl(req), { type: 'svg', margin: 1, color: { dark: '#2a2150', light: '#ffffff' } });
     res.writeHead(200, { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'no-store' });
     return res.end(svg);
   }

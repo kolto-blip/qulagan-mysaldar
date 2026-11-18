@@ -4,58 +4,74 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Құлаған мысалдар — табло</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Rubik:wght@400;600;800&display=swap">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;900&display=swap">
 <style>
-/* Табло для проектора в холле: слева QR и как играть, справа гонка классов и лучшие игроки. */
+/* Фойедегі проекторға арналған табло: сол жақта ақ карточкадағы QR, оң жақта сыныптар жарысы мен үздіктер, жоғарыда жаңа рекордтар ағыны. */
 :root {
-  --board: #17362a; --board-2: #1f4535; --chalk: #f3f1e8; --chalk-dim: #a9bfb2; --yellow: #ffd34d;
-  --hand: "Caveat", "Comic Sans MS", cursive; --ui: "Rubik", system-ui, sans-serif; color-scheme: dark;
+  --bg: #2b1c63; --bg-2: #3a2780; --card: #ffffff; --ink: #2a2150; --muted: #7a72a3; --line: #ece9f7;
+  --green: #1fc98b; --coral: #ff5c6a; --sky: #2fa6ff; --sun: #ffb21f; --violet: #9a5cff; --pink: #ff5fb0;
+  --font: "Nunito", "Segoe UI", system-ui, sans-serif; color-scheme: dark;
 }
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
-body { background: var(--board); color: var(--chalk); font-family: var(--ui); font-size: clamp(14px, 1.15vw, 22px);
-  background-image: radial-gradient(ellipse at 20% 10%, rgba(255,255,255,.06), transparent 55%); }
-.wrap { display: grid; grid-template-columns: minmax(260px, 28%) 1fr 1fr; gap: 2.2em; height: 100%; padding: 2em max(16px, 2.4em); }
-@media (max-width: 900px) { .wrap { grid-template-columns: 1fr; height: auto; } }
-.join { display: flex; flex-direction: column; gap: 1em; }
-h1 { font: 400 3.4em/0.95 var(--hand); margin: 0; }
-h1 span { color: var(--yellow); }
-.qr { background: #fff; padding: .8em; border-radius: 1em; aspect-ratio: 1; max-width: 100%; }
+body { color: #fff; font-family: var(--font); font-size: clamp(14px, 1.1vw, 22px); background-color: var(--bg);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cg fill='%23ffffff' fill-opacity='.05' font-family='Arial' font-weight='700'%3E%3Ctext x='16' y='50' font-size='44'%3E%2B%3C/text%3E%3Ctext x='120' y='70' font-size='40'%3E%C3%97%3C/text%3E%3Ctext x='50' y='160' font-size='44'%3E%C3%B7%3C/text%3E%3Ctext x='148' y='176' font-size='44'%3E%E2%88%92%3C/text%3E%3C/g%3E%3C/svg%3E"),
+    radial-gradient(circle at 30% -10%, var(--bg-2), var(--bg) 70%); }
+.wrap { display: grid; grid-template-columns: minmax(280px, 27%) 1fr 1fr; gap: 1.8em; min-height: 100%; padding: 1.8em max(16px, 2.2em); align-items: start; }
+@media (max-width: 900px) { .wrap { grid-template-columns: 1fr; } }
+.card { background: var(--card); color: var(--ink); border-radius: 1.4em; padding: 1.3em; box-shadow: 0 .4em 0 rgba(0,0,0,.2); }
+.join { display: flex; flex-direction: column; gap: 1em; text-align: center; }
+.tiles { display: flex; justify-content: center; gap: .35em; }
+.tiles i { width: 1.9em; height: 1.9em; border-radius: .5em; font: 900 1.2em/1.9em var(--font); font-style: normal; color: #fff; box-shadow: 0 .18em 0 rgba(0,0,0,.25); }
+h1 { font: 900 2.2em/1 var(--font); margin: 0; text-wrap: balance; }
+.qr { aspect-ratio: 1; max-width: 100%; border-radius: 1em; overflow: hidden; border: .35em solid var(--line); }
 .qr img { width: 100%; height: 100%; display: block; }
-.url { font: 600 1.05em var(--ui); color: var(--yellow); word-break: break-all; margin: 0; }
-.steps { margin: 0; padding-left: 1.2em; color: var(--chalk-dim); line-height: 1.6; }
-.steps b { color: var(--chalk); }
-.col { display: flex; flex-direction: column; gap: .8em; min-width: 0; }
-.col header { display: flex; justify-content: space-between; align-items: baseline; gap: 1em; }
-h2 { font: 400 2.2em var(--hand); margin: 0; }
-.note { color: var(--chalk-dim); font-size: .85em; }
-.row { display: grid; grid-template-columns: 2em 1fr auto; align-items: center; gap: .6em; padding: .45em .2em; border-bottom: 1px solid var(--board-2); font-variant-numeric: tabular-nums; transition: background .4s; }
-.row .n { color: var(--chalk-dim); font-weight: 600; }
-.row .v { font-weight: 800; color: var(--yellow); font-size: 1.15em; }
-.row .meta { color: var(--chalk-dim); font-size: .8em; margin-left: .5em; }
-.row.top1 .n { color: var(--yellow); }
-.row.flash { background: rgba(255,211,77,.18); }
-.track { height: .5em; background: var(--board-2); border-radius: .25em; margin-top: .3em; overflow: hidden; }
-.track i { display: block; height: 100%; background: var(--chalk); border-radius: .25em; transition: width .6s; }
-.row.top1 .track i { background: var(--yellow); }
-.tabs { display: flex; gap: .4em; }
-.tabs button { font: 600 .85em var(--ui); background: transparent; color: var(--chalk-dim); border: 2px solid var(--board-2); border-radius: 2em; padding: .3em .9em; cursor: pointer; }
-.tabs button[aria-pressed="true"] { background: var(--chalk); color: var(--board); border-color: var(--chalk); }
-.empty { color: var(--chalk-dim); font-family: var(--hand); font-size: 1.6em; padding: 1em 0; }
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+.joinat { font-weight: 800; color: var(--muted); }
+.url { font: 900 1.25em var(--font); color: var(--violet); word-break: break-all; margin: 0; background: #f4f0ff; border-radius: .6em; padding: .4em .6em; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: .5em; text-align: left; }
+.steps li { display: flex; gap: .7em; align-items: center; font-weight: 700; }
+.steps li i { flex: none; width: 1.8em; height: 1.8em; border-radius: 50%; display: grid; place-content: center; font: 900 .95em var(--font); font-style: normal; color: #fff; }
+.col { display: flex; flex-direction: column; gap: .7em; min-width: 0; }
+.col header { display: flex; justify-content: space-between; align-items: center; gap: 1em; flex-wrap: wrap; }
+h2 { font: 900 1.8em var(--font); margin: 0; }
+.note { color: #d8d0ff; font-size: .85em; font-weight: 700; }
+.tabs { display: flex; gap: .3em; background: rgba(255,255,255,.12); border-radius: 999px; padding: .25em; }
+.tabs button { font: 800 .85em var(--font); background: transparent; color: #e6e0ff; border: 0; border-radius: 999px; padding: .35em 1em; cursor: pointer; }
+.tabs button[aria-pressed="true"] { background: #fff; color: var(--ink); }
+.tabs button:focus-visible { outline: 3px solid var(--sun); outline-offset: 2px; }
+.row { display: flex; align-items: center; gap: .7em; background: #fff; color: var(--ink); border-radius: 1em; padding: .5em .9em .5em .5em; box-shadow: 0 .22em 0 rgba(0,0,0,.18); font-variant-numeric: tabular-nums; transition: transform .3s; }
+.row.flash { animation: flash 1.4s ease-out; }
+@keyframes flash { 0% { transform: scale(1.04); box-shadow: 0 0 0 .3em var(--sun); } 100% { transform: scale(1); } }
+.rank { width: 1.9em; height: 1.9em; border-radius: 50%; display: grid; place-content: center; font: 900 .95em var(--font); background: var(--line); color: var(--muted); flex: none; }
+.rank.r1 { background: #ffc531; color: #5a3d00; } .rank.r2 { background: #d4d9e6; color: #3c4256; } .rank.r3 { background: #f0a36b; color: #5a2c0b; }
+.avatar { width: 2.2em; height: 2.2em; border-radius: 50%; display: grid; place-content: center; font: 900 .85em var(--font); color: #fff; flex: none; }
+.body { flex: 1; min-width: 0; }
+.nm { font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nm small { color: var(--muted); font-weight: 800; margin-left: .4em; }
+.track { height: .5em; background: var(--line); border-radius: .25em; margin-top: .3em; overflow: hidden; }
+.track i { display: block; height: 100%; border-radius: .25em; transition: width .6s; }
+.pts { font-weight: 900; font-size: 1.2em; color: var(--violet); }
+.empty { background: rgba(255,255,255,.1); border-radius: 1em; padding: 1.2em; font-weight: 800; font-size: 1.2em; color: #e6e0ff; text-align: center; }
+.feed { position: fixed; right: max(16px, 2.2em); bottom: 1.4em; display: flex; flex-direction: column; gap: .5em; align-items: flex-end; pointer-events: none; z-index: 5; }
+.toast { display: flex; align-items: center; gap: .6em; background: var(--sun); color: #3d2a00; border-radius: 999px; padding: .4em 1em .4em .4em; font-weight: 900; box-shadow: 0 .25em 0 rgba(0,0,0,.2); animation: toast 5s ease-out forwards; }
+@keyframes toast { 0% { transform: translateY(1em); opacity: 0; } 8% { transform: none; opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } .row.flash, .toast { animation-duration: .01s; } .toast { animation: none; } }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <section class="join">
-    <h1>Құлаған <span>мысалдар</span></h1>
+  <section class="join card">
+    <div class="tiles" aria-hidden="true"><i style="background:var(--coral)">+</i><i style="background:var(--sky)">−</i><i style="background:var(--green)">×</i><i style="background:var(--sun)">÷</i></div>
+    <h1>Құлаған мысалдар</h1>
     <div class="qr"><img src="/api/qr.svg" alt="Ойынға кіруге арналған QR-код"></div>
+    <span class="joinat">Немесе браузерде аш:</span>
     <p class="url" id="url"></p>
     <ol class="steps">
-      <li>Телефон камерасын QR-ға бағытта</li>
-      <li><b>Атың мен сыныбыңды</b> жаз</li>
-      <li>Мысалдарды <b>сызғышқа тигенше</b> шеш</li>
-      <li>Сыныбыңа ұпай әкел!</li>
+      <li><i style="background:var(--sky)">1</i>Телефон камерасын QR-ға бағытта</li>
+      <li><i style="background:var(--green)">2</i>Атың мен сыныбыңды жаз</li>
+      <li><i style="background:var(--sun)">3</i>Мысалдарды қызыл сызыққа тигенше шеш</li>
+      <li><i style="background:var(--coral)">4</i>Сыныбыңа ұпай әкел!</li>
     </ol>
   </section>
 
@@ -67,22 +83,28 @@ h2 { font: 400 2.2em var(--hand); margin: 0; }
       </div>
     </header>
     <div class="note" id="cnote"></div>
-    <div id="classes"></div>
+    <div class="col" id="classes"></div>
   </section>
 
   <section class="col">
     <header><h2>Үздік ойыншылар</h2><span class="note" id="games"></span></header>
-    <div id="players"></div>
+    <div class="col" id="players"></div>
   </section>
 </div>
+<div class="feed" id="feed" aria-live="polite"></div>
 
 <script>
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const AV = ['#ff5c6a', '#2fa6ff', '#1fc98b', '#ffb21f', '#9a5cff', '#ff5fb0', '#00b8c4', '#ff8a3d'];
+const initials = n => n.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+const avColor = s => { let h = 0; for (const ch of s) h = (h * 31 + ch.codePointAt(0)) >>> 0; return AV[h % AV.length]; };
+const rank = i => `<span class="rank ${i < 3 ? 'r' + (i + 1) : ''}">${i + 1}</span>`;
+
 fetch('/api/join-url').then(r => r.json()).then(j => $('url').textContent = j.url.replace(/^https?:\/\//, '').replace(/\/$/, ''));
 setInterval(() => document.querySelector('.qr img').src = '/api/qr.svg?' + Date.now(), 10 * 60_000);
 
-let period = 'day', es = null, prev = {};
+let period = 'day', es = null, prevC = null, prevP = null;
 function connect() {
   if (es) es.close();
   es = new EventSource('/api/stream?period=' + period);
@@ -90,30 +112,38 @@ function connect() {
 }
 $('tabs').onclick = e => {
   const b = e.target.closest('button'); if (!b) return;
-  period = b.dataset.p; prev = {};
+  period = b.dataset.p; prevC = prevP = null;
   document.querySelectorAll('#tabs button').forEach(x => x.setAttribute('aria-pressed', x === b));
   connect();
 };
+
+function toast(p) {
+  const t = document.createElement('div'); t.className = 'toast';
+  t.innerHTML = `<span class="avatar" style="background:${avColor(p.cls + '|' + p.name)}">${esc(initials(p.name))}</span>${esc(p.name)} · ${esc(p.cls)}: ${p.score} ұпай!`;
+  const f = $('feed'); f.appendChild(t);
+  while (f.children.length > 4) f.firstChild.remove();
+  setTimeout(() => t.remove(), 5000);
+}
 
 function render(lb) {
   $('games').textContent = lb.games ? `ойын саны: ${lb.games}` : '';
   $('cnote').textContent = `Сынып ұпайы — оқушылардың ${lb.topPerClass} үздік нәтижесінің қосындысы`;
   const max = Math.max(1, ...lb.classes.map(c => c.total));
-  $('classes').innerHTML = lb.classes.slice(0, 12).map((c, i) => `
-    <div class="row ${i === 0 ? 'top1' : ''} ${prev['c' + c.cls] !== undefined && prev['c' + c.cls] !== c.total ? 'flash' : ''}">
-      <span class="n">${i + 1}</span>
-      <div><b>${esc(c.cls)}</b><span class="meta">${c.players} ойыншы</span>
-        <div class="track"><i style="width:${(c.total / max * 100).toFixed(1)}%"></i></div></div>
-      <span class="v">${c.total}</span>
-    </div>`).join('') || '<div class="empty">Әзірге бірде-бір сынып жоқ. Кім бірінші?</div>';
-  $('players').innerHTML = lb.players.slice(0, 15).map((p, i) => `
-    <div class="row ${i === 0 ? 'top1' : ''}">
-      <span class="n">${i + 1}</span>
-      <div>${esc(p.name)}<span class="meta">${esc(p.cls)}</span></div>
-      <span class="v">${p.score}</span>
-    </div>`).join('') || '<div class="empty">Табло алғашқы рекордты күтуде</div>';
-  prev = {}; lb.classes.forEach(c => prev['c' + c.cls] = c.total);
-  setTimeout(() => document.querySelectorAll('.row.flash').forEach(r => r.classList.remove('flash')), 1500);
+  $('classes').innerHTML = lb.classes.slice(0, 10).map((c, i) => {
+    const col = avColor(c.cls), changed = prevC && prevC[c.cls] !== c.total;
+    return `<div class="row ${changed ? 'flash' : ''}">${rank(i)}<span class="avatar" style="background:${col}">${esc(c.cls)}</span>
+      <div class="body"><div class="nm">${esc(c.cls)} сынып<small>${c.players} ойыншы</small></div>
+      <div class="track"><i style="width:${(c.total / max * 100).toFixed(1)}%;background:${col}"></i></div></div>
+      <span class="pts">${c.total}</span></div>`;
+  }).join('') || '<div class="empty">Әзірге бірде-бір сынып жоқ. Кім бірінші?</div>';
+  $('players').innerHTML = lb.players.slice(0, 12).map((p, i) => `
+    <div class="row">${rank(i)}<span class="avatar" style="background:${avColor(p.cls + '|' + p.name)}">${esc(initials(p.name))}</span>
+      <div class="body"><div class="nm">${esc(p.name)}<small>${esc(p.cls)}</small></div></div>
+      <span class="pts">${p.score}</span></div>`).join('') || '<div class="empty">Табло алғашқы рекордты күтуде</div>';
+  // жаңа немесе жақсарған нәтижелер — төменгі бұрышта хабарлама
+  if (prevP) lb.players.forEach(p => { const k = p.cls + '|' + p.name; if (prevP[k] !== p.score) toast(p); });
+  prevC = {}; lb.classes.forEach(c => prevC[c.cls] = c.total);
+  prevP = {}; lb.players.forEach(p => prevP[p.cls + '|' + p.name] = p.score);
 }
 connect();
 // тегін хостинг 15 минут бос тұрса «ұйықтайды»: табло ашық тұрғанда серверді оятып отырамыз
