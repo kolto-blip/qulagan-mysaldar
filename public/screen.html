@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="kk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Құлаған мысалдар — табло</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Rubik:wght@400;600;800&display=swap">
+<style>
+/* Табло для проектора в холле: слева QR и как играть, справа гонка классов и лучшие игроки. */
+:root {
+  --board: #17362a; --board-2: #1f4535; --chalk: #f3f1e8; --chalk-dim: #a9bfb2; --yellow: #ffd34d;
+  --hand: "Caveat", "Comic Sans MS", cursive; --ui: "Rubik", system-ui, sans-serif; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--board); color: var(--chalk); font-family: var(--ui); font-size: clamp(14px, 1.15vw, 22px);
+  background-image: radial-gradient(ellipse at 20% 10%, rgba(255,255,255,.06), transparent 55%); }
+.wrap { display: grid; grid-template-columns: minmax(260px, 28%) 1fr 1fr; gap: 2.2em; height: 100%; padding: 2em max(16px, 2.4em); }
+@media (max-width: 900px) { .wrap { grid-template-columns: 1fr; height: auto; } }
+.join { display: flex; flex-direction: column; gap: 1em; }
+h1 { font: 400 3.4em/0.95 var(--hand); margin: 0; }
+h1 span { color: var(--yellow); }
+.qr { background: #fff; padding: .8em; border-radius: 1em; aspect-ratio: 1; max-width: 100%; }
+.qr img { width: 100%; height: 100%; display: block; }
+.url { font: 600 1.05em var(--ui); color: var(--yellow); word-break: break-all; margin: 0; }
+.steps { margin: 0; padding-left: 1.2em; color: var(--chalk-dim); line-height: 1.6; }
+.steps b { color: var(--chalk); }
+.col { display: flex; flex-direction: column; gap: .8em; min-width: 0; }
+.col header { display: flex; justify-content: space-between; align-items: baseline; gap: 1em; }
+h2 { font: 400 2.2em var(--hand); margin: 0; }
+.note { color: var(--chalk-dim); font-size: .85em; }
+.row { display: grid; grid-template-columns: 2em 1fr auto; align-items: center; gap: .6em; padding: .45em .2em; border-bottom: 1px solid var(--board-2); font-variant-numeric: tabular-nums; transition: background .4s; }
+.row .n { color: var(--chalk-dim); font-weight: 600; }
+.row .v { font-weight: 800; color: var(--yellow); font-size: 1.15em; }
+.row .meta { color: var(--chalk-dim); font-size: .8em; margin-left: .5em; }
+.row.top1 .n { color: var(--yellow); }
+.row.flash { background: rgba(255,211,77,.18); }
+.track { height: .5em; background: var(--board-2); border-radius: .25em; margin-top: .3em; overflow: hidden; }
+.track i { display: block; height: 100%; background: var(--chalk); border-radius: .25em; transition: width .6s; }
+.row.top1 .track i { background: var(--yellow); }
+.tabs { display: flex; gap: .4em; }
+.tabs button { font: 600 .85em var(--ui); background: transparent; color: var(--chalk-dim); border: 2px solid var(--board-2); border-radius: 2em; padding: .3em .9em; cursor: pointer; }
+.tabs button[aria-pressed="true"] { background: var(--chalk); color: var(--board); border-color: var(--chalk); }
+.empty { color: var(--chalk-dim); font-family: var(--hand); font-size: 1.6em; padding: 1em 0; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="join">
+    <h1>Құлаған <span>мысалдар</span></h1>
+    <div class="qr"><img src="/api/qr.svg" alt="Ойынға кіруге арналған QR-код"></div>
+    <p class="url" id="url"></p>
+    <ol class="steps">
+      <li>Телефон камерасын QR-ға бағытта</li>
+      <li><b>Атың мен сыныбыңды</b> жаз</li>
+      <li>Мысалдарды <b>сызғышқа тигенше</b> шеш</li>
+      <li>Сыныбыңа ұпай әкел!</li>
+    </ol>
+  </section>
+
+  <section class="col">
+    <header><h2>Сыныптар жарысы</h2>
+      <div class="tabs" id="tabs">
+        <button data-p="day" aria-pressed="true">Бүгін</button>
+        <button data-p="week" aria-pressed="false">Апта</button>
+      </div>
+    </header>
+    <div class="note" id="cnote"></div>
+    <div id="classes"></div>
+  </section>
+
+  <section class="col">
+    <header><h2>Үздік ойыншылар</h2><span class="note" id="games"></span></header>
+    <div id="players"></div>
+  </section>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+fetch('/api/join-url').then(r => r.json()).then(j => $('url').textContent = j.url.replace(/^https?:\/\//, '').replace(/\/$/, ''));
+setInterval(() => document.querySelector('.qr img').src = '/api/qr.svg?' + Date.now(), 10 * 60_000);
+
+let period = 'day', es = null, prev = {};
+function connect() {
+  if (es) es.close();
+  es = new EventSource('/api/stream?period=' + period);
+  es.onmessage = e => render(JSON.parse(e.data));
+}
+$('tabs').onclick = e => {
+  const b = e.target.closest('button'); if (!b) return;
+  period = b.dataset.p; prev = {};
+  document.querySelectorAll('#tabs button').forEach(x => x.setAttribute('aria-pressed', x === b));
+  connect();
+};
+
+function render(lb) {
+  $('games').textContent = lb.games ? `ойын саны: ${lb.games}` : '';
+  $('cnote').textContent = `Сынып ұпайы — оқушылардың ${lb.topPerClass} үздік нәтижесінің қосындысы`;
+  const max = Math.max(1, ...lb.classes.map(c => c.total));
+  $('classes').innerHTML = lb.classes.slice(0, 12).map((c, i) => `
+    <div class="row ${i === 0 ? 'top1' : ''} ${prev['c' + c.cls] !== undefined && prev['c' + c.cls] !== c.total ? 'flash' : ''}">
+      <span class="n">${i + 1}</span>
+      <div><b>${esc(c.cls)}</b><span class="meta">${c.players} ойыншы</span>
+        <div class="track"><i style="width:${(c.total / max * 100).toFixed(1)}%"></i></div></div>
+      <span class="v">${c.total}</span>
+    </div>`).join('') || '<div class="empty">Әзірге бірде-бір сынып жоқ. Кім бірінші?</div>';
+  $('players').innerHTML = lb.players.slice(0, 15).map((p, i) => `
+    <div class="row ${i === 0 ? 'top1' : ''}">
+      <span class="n">${i + 1}</span>
+      <div>${esc(p.name)}<span class="meta">${esc(p.cls)}</span></div>
+      <span class="v">${p.score}</span>
+    </div>`).join('') || '<div class="empty">Табло алғашқы рекордты күтуде</div>';
+  prev = {}; lb.classes.forEach(c => prev['c' + c.cls] = c.total);
+  setTimeout(() => document.querySelectorAll('.row.flash').forEach(r => r.classList.remove('flash')), 1500);
+}
+connect();
+// тегін хостинг 15 минут бос тұрса «ұйықтайды»: табло ашық тұрғанда серверді оятып отырамыз
+setInterval(() => fetch('/api/join-url', { cache: 'no-store' }).catch(() => {}), 4 * 60_000);
+</script>
+</body>
+</html>

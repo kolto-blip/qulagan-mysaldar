@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="kk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Құлаған мысалдар</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Rubik:wght@400;600;800&display=swap">
+<style>
+/* Тақта + сызғыш: мысалдар бормен жазылып, телефон экранында төменге құлайды. Төменде бас бармаққа арналған пернетақта. */
+:root {
+  --board: #17362a; --board-2: #1f4535; --board-3: #285741; --chalk: #f3f1e8; --dim: #a9bfb2;
+  --yellow: #ffd34d; --good: #7ee08a; --bad: #ff7a6b; --wood: #d9b77c; --wood-2: #b8945a;
+  --hand: "Caveat", "Comic Sans MS", cursive; --ui: "Rubik", system-ui, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--board); color: var(--chalk); font-family: var(--ui); overscroll-behavior: none;
+  background-image: radial-gradient(ellipse at 30% 20%, rgba(255,255,255,.05), transparent 60%); }
+[hidden] { display: none !important; }
+.screen { max-width: 480px; margin: 0 auto; height: 100%; display: flex; flex-direction: column;
+  padding: env(safe-area-inset-top) max(12px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); }
+.scroll { overflow-y: auto; gap: 16px; padding-block: 24px; height: auto; min-height: 100%; }
+h1 { font: 700 2.6rem/0.95 var(--hand); margin: 0; }
+h1 span, .y { color: var(--yellow); }
+h2 { font: 600 1.7rem var(--hand); margin: 4px 0 0; }
+p { margin: 0; line-height: 1.45; }
+.dim { color: var(--dim); }
+.btn { display: block; text-align: center; text-decoration: none; font: 800 1.15rem var(--ui); padding: 16px; border-radius: 14px; border: 0; cursor: pointer;
+  background: var(--yellow); color: #2a2100; box-shadow: 0 4px 0 #b8901a; width: 100%; }
+.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #b8901a; }
+.btn.ghost { background: transparent; color: var(--chalk); box-shadow: none; border: 2px solid var(--board-3); }
+.btn:focus-visible, .key:focus-visible { outline: 3px solid var(--chalk); outline-offset: 2px; }
+.err { color: var(--bad); min-height: 1.2em; }
+label { display: grid; gap: 6px; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
+input { font: 600 1.2rem var(--ui); padding: 13px 15px; border-radius: 12px; border: 2px solid var(--board-3); background: rgba(0,0,0,.25); color: var(--chalk); width: 100%; }
+input:focus { outline: none; border-color: var(--yellow); }
+.rules { list-style: none; margin: 0; padding: 14px 16px; display: grid; gap: 8px; border: 2px dashed var(--board-3); border-radius: 12px; color: var(--dim); font-size: .95rem; }
+.rules b { color: var(--chalk); }
+
+/* ойын */
+.hud { display: flex; align-items: center; gap: 14px; padding-block: 10px 6px; font-variant-numeric: tabular-nums; }
+.hud .score { font: 800 1.7rem var(--ui); color: var(--yellow); flex: 1; }
+.hud .lbl { font-size: .62rem; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); display: block; }
+.hud .val { font: 800 1.05rem var(--ui); }
+.combo { color: var(--good); }
+.lives { display: flex; gap: 4px; padding-top: 2px; }
+.lives i { width: 9px; height: 17px; border-radius: 2px; background: var(--chalk); transform: rotate(12deg); }
+.lives i.gone { background: var(--board-3); }
+.field { position: relative; flex: 1; overflow: hidden; border-radius: 10px 10px 0 0; min-height: 200px; }
+.drop { position: absolute; top: 0; left: 0; white-space: nowrap; font: 700 1.75rem/1 var(--hand); color: var(--chalk); padding: 2px 4px;
+  font-variant-numeric: tabular-nums; will-change: transform; }
+.drop.danger { color: #ffc2b8; }
+.drop.gold { color: var(--yellow); text-shadow: 0 0 .6em rgba(255,211,77,.45); }
+.drop.gold::after { content: "×3"; font: 800 .45em var(--ui); vertical-align: super; margin-left: 3px; }
+.puff { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: var(--chalk); pointer-events: none; animation: puff .55s ease-out forwards; }
+@keyframes puff { to { transform: translate(var(--dx), var(--dy)) scale(.2); opacity: 0; } }
+.pop { position: absolute; font: 800 1.1rem var(--ui); color: var(--good); pointer-events: none; animation: rise .8s ease-out forwards; }
+@keyframes rise { to { transform: translateY(-36px); opacity: 0; } }
+.count { position: absolute; inset: 0; display: grid; place-content: center; font: 700 7rem var(--hand); color: var(--yellow); pointer-events: none; }
+.ruler { height: 18px; flex-shrink: 0; transition: background .2s;
+  background-image: repeating-linear-gradient(90deg, rgba(60,40,10,.7) 0 2px, transparent 2px 40px), repeating-linear-gradient(90deg, rgba(60,40,10,.5) 0 1px, transparent 1px 8px), linear-gradient(var(--wood), var(--wood-2));
+  background-size: 100% 9px, 100% 5px, 100% 100%; background-repeat: no-repeat; }
+.ruler.hit { background: var(--bad); }
+.typed { font: 800 2rem var(--ui); text-align: center; min-height: 56px; padding: 6px; margin-top: 8px; border-radius: 12px;
+  border: 3px solid var(--board-3); background: rgba(0,0,0,.28); font-variant-numeric: tabular-nums; transition: border-color .12s; }
+.typed.good { border-color: var(--good); }
+.typed.bad { border-color: var(--bad); animation: shake .25s; }
+@keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+.pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+.key { font: 600 1.6rem var(--ui); padding: 11px 0; border-radius: 12px; border: 0; cursor: pointer; background: var(--board-2); color: var(--chalk);
+  box-shadow: 0 3px 0 rgba(0,0,0,.35); touch-action: manipulation; user-select: none; }
+.key:active { transform: translateY(2px); box-shadow: none; }
+.key.ok { background: var(--yellow); color: #2a2100; font-weight: 800; }
+.key.pause { font-size: 1rem; }
+
+/* нәтиже */
+.big { font: 800 5rem/1 var(--ui); color: var(--yellow); text-align: center; font-variant-numeric: tabular-nums; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; }
+.stats div { background: var(--board-2); border-radius: 12px; padding: 10px 4px; }
+.stats b { display: block; font-size: 1.35rem; font-variant-numeric: tabular-nums; }
+.stats span { font-size: .72rem; color: var(--dim); text-transform: uppercase; letter-spacing: .06em; }
+.tbl { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.tbl td { padding: 7px 4px; border-bottom: 1px solid var(--board-2); }
+.tbl td:first-child { width: 2em; color: var(--dim); }
+.tbl td:last-child { text-align: right; font-weight: 800; color: var(--yellow); }
+.tbl tr.me td { color: var(--yellow); }
+.cls { font-size: .8rem; color: var(--dim); margin-left: 6px; }
+@media (prefers-reduced-motion: reduce) { .puff, .pop, .typed.bad { animation-duration: .01s; } }
+</style>
+</head>
+<body>
+
+<section class="screen scroll" id="s-intro">
+  <h1>Құлаған <span>мысалдар</span></h1>
+  <p class="dim">Ұпай жина, сыныбыңды бірінші орынға шығар. Бүкіл мектепте кім мықты?</p>
+  <form id="reg" style="display:grid;gap:14px">
+    <label for="name">Атың және тегіңнің бірінші әрпі<input id="name" autocomplete="off" maxlength="24" placeholder="Айгерім Қ."></label>
+    <label for="cls">Сынып<input id="cls" autocomplete="off" maxlength="5" placeholder="7Ә"></label>
+    <p class="err" id="intro-err"></p>
+    <button class="btn" id="go" type="submit">Ойнау</button>
+  </form>
+  <ul class="rules">
+    <li>Мысалдар құлап келеді. <b>Сызғышқа тигенше</b> жауабын жазып, OK бас.</li>
+    <li>Сызғышқа тиген мысал бір <b>бор</b> алады. 3 бор бітсе, ойын бітеді.</li>
+    <li>Қатарынан 5 дұрыс жауап — <b>×2</b>, 10 жауап — <b>×3</b>.</li>
+    <li><b class="y">Алтын мысал</b> ×3 ұпай береді және экранды тазалайды.</li>
+  </ul>
+</section>
+
+<section class="screen" id="s-game" hidden>
+  <div class="hud">
+    <span class="score" id="h-score">0</span>
+    <span><span class="lbl">Бор</span><span class="lives" id="h-lives"></span></span>
+    <span><span class="lbl">Деңгей</span><span class="val" id="h-level">1</span></span>
+    <span><span class="lbl">Комбо</span><span class="val combo" id="h-combo">×1</span></span>
+  </div>
+  <div class="field" id="field"><div class="count" id="count" hidden></div></div>
+  <div class="ruler" id="ruler"></div>
+  <div class="typed" id="typed" aria-live="polite"></div>
+  <div class="pad" id="pad">
+    <button class="key" data-k="1">1</button><button class="key" data-k="2">2</button><button class="key" data-k="3">3</button>
+    <button class="key" data-k="4">4</button><button class="key" data-k="5">5</button><button class="key" data-k="6">6</button>
+    <button class="key" data-k="7">7</button><button class="key" data-k="8">8</button><button class="key" data-k="9">9</button>
+    <button class="key" data-k="del" aria-label="Өшіру">⌫</button><button class="key" data-k="0">0</button><button class="key ok" data-k="ok">OK</button>
+  </div>
+</section>
+
+<section class="screen scroll" id="s-end" hidden>
+  <p class="dim" id="e-who" style="text-align:center"></p>
+  <p class="big" id="e-score">0</p>
+  <div class="stats">
+    <div><b id="e-solved">0</b><span>шешілді</span></div>
+    <div><b id="e-place">–</b><span>орын</span></div>
+    <div><b id="e-cplace">–</b><span>сынып</span></div>
+  </div>
+  <p class="err" id="e-err" style="text-align:center"></p>
+  <button class="btn" id="again" type="button">Тағы ойнау</button>
+  <h2>Бүгінгі үздіктер</h2>
+  <table class="tbl"><tbody id="top"></tbody></table>
+  <h2>Сыныптар</h2>
+  <table class="tbl"><tbody id="classes"></tbody></table>
+  <button class="btn ghost" id="change" type="button">Ойыншыны ауыстыру</button>
+</section>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const show = id => document.querySelectorAll('body > .screen').forEach(s => s.hidden = s.id !== id);
+const store = { get(k) { try { return localStorage.getItem(k) || ''; } catch { return ''; } },
+                set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+
+// атын және сыныбын келесі жолы қайта жазбау үшін есте сақтаймыз
+const player = { name: '', cls: '' };
+$('name').value = store.get('blitz-name');
+$('cls').value = store.get('blitz-cls');
+
+async function api(path, body) {
+  const r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({ error: 'Сервермен байланыс жоқ.' }));
+  if (!r.ok) throw new Error(j.error || 'Қате');
+  return j;
+}
+
+function makeQuestion(level) {
+  const kinds = level === 1 ? ['+', '-'] : level === 2 ? ['+', '-', '×'] : ['+', '-', '×', '÷'];
+  const k = kinds[rnd(0, kinds.length - 1)];
+  const big = [0, 20, 50, 100, 200, 500][level], tbl = [0, 5, 9, 9, 12, 15][level];
+  let a, b, ans;
+  if (k === '+') { a = rnd(2, big); b = rnd(2, big); ans = a + b; }
+  else if (k === '-') { a = rnd(5, big); b = rnd(1, a); ans = a - b; }
+  else if (k === '×') { a = rnd(2, tbl); b = rnd(2, level >= 4 ? 19 : 9); ans = a * b; }
+  else { b = rnd(2, tbl); ans = rnd(2, level >= 4 ? 15 : 9); a = b * ans; }
+  return { text: `${a} ${k} ${b}`, ans, points: level };
+}
+
+const LIVES = 3;
+let G = null;
+$('reg').onsubmit = e => {
+  e.preventDefault();
+  player.name = $('name').value.trim().replace(/\s+/g, ' ');
+  player.cls = $('cls').value.trim().toUpperCase().replace(/\s+/g, '');
+  if (player.name.length < 2) { $('intro-err').textContent = 'Атыңды жаз (кемінде 2 әріп).'; return; }
+  if (!/^\d{1,2}/.test(player.cls)) { $('intro-err').textContent = 'Сынып былай жазылады: 7А, 10Ә.'; return; }
+  store.set('blitz-name', player.name); store.set('blitz-cls', player.cls);
+  start($('intro-err'));
+};
+$('change').onclick = () => { $('intro-err').textContent = ''; show('s-intro'); };
+$('again').onclick = () => start($('e-err'));
+
+async function start(errEl) {
+  errEl.textContent = '';
+  let id;
+  try { ({ id } = await api('/api/fall/start', player)); }
+  catch (e) { errEl.textContent = e.message; return; }
+  show('s-game');
+  document.querySelectorAll('.drop, .puff, .pop').forEach(n => n.remove());
+  G = { id, drops: [], score: 0, lives: LIVES, combo: 0, solved: 0, input: '', time: 0, spawnIn: 0, running: false, last: 0 };
+  renderHud(); $('typed').textContent = '';
+  const c = $('count'); c.hidden = false;
+  for (const n of [3, 2, 1]) { c.textContent = n; await new Promise(r => setTimeout(r, 600)); }
+  c.hidden = true;
+  G.running = true; G.last = performance.now();
+  requestAnimationFrame(loop);
+}
+const level = () => Math.min(5, 1 + Math.floor(G.time / 25));
+const mult = () => G.combo >= 10 ? 3 : G.combo >= 5 ? 2 : 1;
+function renderHud() {
+  $('h-score').textContent = G.score;
+  $('h-level').textContent = level();
+  $('h-combo').textContent = '×' + mult();
+  $('h-lives').innerHTML = Array.from({ length: LIVES }, (_, i) => `<i class="${i < G.lives ? '' : 'gone'}"></i>`).join('');
+}
+function spawn() {
+  const field = $('field'), W = field.clientWidth, lv = level();
+  let q, tries = 0;
+  do { q = makeQuestion(Math.random() < 0.25 && lv > 1 ? lv - 1 : lv); tries++; } while (G.drops.some(d => d.ans === q.ans) && tries < 10);
+  const el = document.createElement('div'); el.className = 'drop';
+  const gold = G.time > 15 && Math.random() < 0.06;
+  if (gold) el.classList.add('gold');
+  el.textContent = q.text; field.appendChild(el);
+  const w = el.offsetWidth;
+  let x, ok, n = 0;
+  do { x = rnd(4, Math.max(4, W - w - 4)); ok = !G.drops.some(d => d.y < 70 && Math.abs(d.x - x) < Math.max(w, d.w) + 8); n++; } while (!ok && n < 15);
+  const speed = (30 + G.time * 0.8 + rnd(0, 12)) * (field.clientHeight / 600) * (gold ? 0.85 : 1);
+  const d = { ...q, el, x, y: -40, w, speed, gold };
+  el.style.transform = `translate(${x}px, ${d.y}px)`;
+  G.drops.push(d);
+}
+function loop(now) {
+  if (!G || !G.running) return;
+  const dt = Math.min(0.05, (now - G.last) / 1000); G.last = now;
+  G.time += dt; G.spawnIn -= dt;
+  if (G.spawnIn <= 0) { spawn(); G.spawnIn = Math.max(1.0, 3.2 - G.time * 0.022); }
+  const floor = $('field').clientHeight;
+  for (const d of [...G.drops]) {
+    d.y += d.speed * dt;
+    d.el.style.transform = `translate(${d.x}px, ${d.y}px)`;
+    d.el.classList.toggle('danger', !d.gold && d.y > floor * 0.7);
+    if (d.y + d.el.offsetHeight >= floor) miss(d);
+  }
+  if (G.lives <= 0) return gameOver();
+  renderHud();
+  requestAnimationFrame(loop);
+}
+function removeDrop(d) { d.el.remove(); G.drops = G.drops.filter(x => x !== d); }
+function miss(d) {
+  removeDrop(d); G.lives--; G.combo = 0;
+  const r = $('ruler'); r.classList.add('hit'); setTimeout(() => r.classList.remove('hit'), 250);
+  if (navigator.vibrate) try { navigator.vibrate(80); } catch {}
+}
+function puff(d, color) {
+  const f = $('field'), cx = d.x + d.w / 2, cy = d.y + d.el.offsetHeight / 2;
+  for (let i = 0; i < 10; i++) {
+    const p = document.createElement('div'); p.className = 'puff';
+    const a = Math.random() * Math.PI * 2, r = 20 + Math.random() * 35;
+    p.style.left = cx + 'px'; p.style.top = cy + 'px';
+    p.style.setProperty('--dx', Math.cos(a) * r + 'px'); p.style.setProperty('--dy', Math.sin(a) * r + 'px');
+    if (color) p.style.background = color;
+    f.appendChild(p); setTimeout(() => p.remove(), 600);
+  }
+}
+function popText(d, text) {
+  const t = document.createElement('div'); t.className = 'pop'; t.textContent = text;
+  t.style.left = d.x + 'px'; t.style.top = d.y + 'px';
+  $('field').appendChild(t); setTimeout(() => t.remove(), 850);
+}
+function flashTyped(cls) { const t = $('typed'); t.classList.remove('good', 'bad'); void t.offsetWidth; t.classList.add(cls); setTimeout(() => t.classList.remove(cls), 300); }
+function submit() {
+  if (!G.input) return;
+  const v = Number(G.input);
+  const hits = G.drops.filter(d => d.ans === v).sort((a, b) => b.y - a.y);
+  G.input = ''; $('typed').textContent = '';
+  if (!hits.length) { G.combo = 0; flashTyped('bad'); renderHud(); return; }
+  const d = hits[0];
+  G.combo++; G.solved++;
+  const gain = d.points * mult() * (d.gold ? 3 : 1);
+  G.score += gain;
+  puff(d, d.gold ? 'var(--yellow)' : null); popText(d, '+' + gain); removeDrop(d);
+  if (d.gold) for (const o of [...G.drops]) { G.score += o.points; G.solved++; puff(o, 'var(--yellow)'); popText(o, '+' + o.points); removeDrop(o); }
+  flashTyped('good'); renderHud();
+}
+function press(k) {
+  if (!G || !G.running) return;
+  if (k === 'ok') return submit();
+  if (k === 'del') G.input = G.input.slice(0, -1);
+  else if (G.input.length < 5) G.input += k;
+  $('typed').textContent = G.input;
+}
+$('pad').addEventListener('pointerdown', e => { const b = e.target.closest('.key'); if (!b) return; e.preventDefault(); press(b.dataset.k); });
+document.addEventListener('keydown', e => {
+  if ($('s-game').hidden) return;
+  const m = /^(?:Digit|Numpad)(\d)$/.exec(e.code);
+  if (m) press(m[1]); else if (e.key === 'Backspace') press('del'); else if (e.key === 'Enter') press('ok'); else return;
+  e.preventDefault();
+});
+
+async function gameOver() {
+  const g = G; G.running = false; G = null;
+  document.querySelectorAll('.drop').forEach(n => n.remove());
+  show('s-end');
+  $('e-who').textContent = `${player.name}, ${player.cls} · ${Math.round(g.time)} с`;
+  $('e-score').textContent = g.score; $('e-solved').textContent = g.solved;
+  $('e-place').textContent = '…'; $('e-cplace').textContent = '…'; $('e-err').textContent = '';
+  try {
+    const r = await api('/api/fall/finish', { id: g.id, score: g.score, solved: g.solved, seconds: g.time });
+    $('e-place').textContent = r.place || '–'; $('e-cplace').textContent = r.classPlace || '–';
+  } catch (e) { $('e-place').textContent = '–'; $('e-cplace').textContent = '–'; $('e-err').textContent = e.message; }
+  const lb = await fetch('/api/leaderboard?period=day').then(r => r.json()).catch(() => null);
+  if (!lb) return;
+  const me = p => p.name === player.name && p.cls === player.cls;
+  $('top').innerHTML = lb.players.slice(0, 10).map((p, i) =>
+    `<tr class="${me(p) ? 'me' : ''}"><td>${i + 1}</td><td>${esc(p.name)}<span class="cls">${esc(p.cls)}</span></td><td>${p.score}</td></tr>`).join('');
+  $('classes').innerHTML = lb.classes.slice(0, 10).map((c, i) =>
+    `<tr class="${c.cls === player.cls ? 'me' : ''}"><td>${i + 1}</td><td>${esc(c.cls)}<span class="cls">${c.players} ойыншы</span></td><td>${c.total}</td></tr>`).join('');
+}
+</script>
+</body>
+</html>

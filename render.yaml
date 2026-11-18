@@ -1,0 +1,14 @@
+# Render Blueprint: Render осы файлды оқып, сайтты өзі баптайды.
+services:
+  - type: web
+    name: qulagan-mysaldar
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: ADMIN_PIN        # мұғалімнің PIN-і (/admin беті үшін)
+        sync: false
+      - key: DATABASE_URL     # Neon-нан алынған мекенжай: postgresql://...
+        sync: false
