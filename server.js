@@ -197,8 +197,8 @@ const server = http.createServer(async (req, res) => {
     games.delete(body.id);
     const real = (Date.now() - g.started) / 1000;
     const secs = Number(body.seconds) || 0, solved = Math.floor(Number(body.solved) || 0), score = Math.floor(Number(body.score) || 0);
-    // шынайылығын тексеру: ойын уақыты, шешу жылдамдығы, бір мысалға ең көп ұпай (5 ұпай × комбо 3 × алтын 3)
-    if (secs > real + 3 || secs < 0 || solved < 0 || score < 0 || solved > secs / 0.5 + 3 || score > solved * 15 + 15)
+    // шынайылығын тексеру: ойын уақыты (ойын 90 секунд), шешу жылдамдығы, бір мысалға ең көп ұпай (5 ұпай × комбо 3 × алтын 3)
+    if (secs > real + 3 || secs < 0 || secs > 95 || solved < 0 || score < 0 || solved > secs / 0.5 + 3 || score > solved * 15 + 15)
       return sendJson(res, 400, { error: 'Нәтиже күдікті болып шықты. Тағы ойна.' });
     const rec = { id: body.id, game: 'fall', name: g.name, cls: g.cls, score, correct: solved, wrong: 0, secs: Math.round(secs), t: Date.now() };
     try { await store.add(rec); }

@@ -61,9 +61,11 @@ form.card { display: grid; gap: 14px; }
 .chip.score { font-size: 1.25rem; margin-right: auto; }
 .chip.combo { background: var(--sun); color: #3d2a00; }
 .chip.combo small { color: #6b4b00; }
-.hearts { display: flex; gap: 3px; }
-.hearts svg { width: 18px; height: 18px; display: block; }
-.hearts .gone { opacity: .2; filter: grayscale(1); }
+.chip.time.low { background: var(--coral); color: #fff; }
+.chip.time.low small { color: #ffe0e3; }
+.tbar { height: 8px; border-radius: 4px; background: rgba(255,255,255,.15); overflow: hidden; margin-bottom: 4px; }
+.tbar i { display: block; height: 100%; width: 100%; background: var(--sun); transform-origin: left; border-radius: 4px; }
+.pop.neg { color: #ffd0d4; font-size: 1.5rem; }
 .field { position: relative; flex: 1; overflow: hidden; min-height: 200px; }
 .field.shake { animation: shake .3s; }
 .drop { position: absolute; top: 0; left: 0; white-space: nowrap; font: 900 1.45rem/1 var(--font); color: #fff; padding: 10px 14px; border-radius: 14px;
@@ -143,7 +145,7 @@ form.card { display: grid; gap: 14px; }
   </form>
   <ul class="rules">
     <li><i class="c1" style="background:var(--c)">1</i><span>Мысалдар құлайды. <b>Қызыл сызыққа</b> тигенше жауабын жазып, <b>OK</b> бас.</span></li>
-    <li><i class="c0" style="background:var(--c)">3</i><span>Сызыққа тиген мысал бір <b>жүрек</b> алады. 3 жүрек бітсе, ойын бітеді.</span></li>
+    <li><i class="c0" style="background:var(--c)">−1</i><span>Ойын <b>90 секунд</b>. Қате жауап — <b>−1 ұпай</b>. Сызыққа тиген мысал өз ұпайын алып кетеді.</span></li>
     <li><i class="c3" style="background:var(--c)">×2</i><span>Қатарынан 5 дұрыс жауап — <b>×2</b>, 10 жауап — <b>×3</b> ұпай.</span></li>
     <li><i class="c5" style="background:var(--c)">★</i><span><b>Алтын мысал</b> ×3 ұпай береді және экранды тазалайды.</span></li>
   </ul>
@@ -152,10 +154,11 @@ form.card { display: grid; gap: 14px; }
 <section class="screen" id="s-game" hidden>
   <div class="hud">
     <span class="chip score" id="h-score">0</span>
-    <span class="chip"><span class="hearts" id="h-lives"></span></span>
+    <span class="chip time" id="h-timechip"><small>УАҚЫТ</small><span id="h-time">90</span></span>
     <span class="chip"><small>ДЕҢГЕЙ</small><span id="h-level">1</span></span>
     <span class="chip combo"><small>КОМБО</small><span id="h-combo">×1</span></span>
   </div>
+  <div class="tbar"><i id="h-tbar"></i></div>
   <div class="field" id="field"><div class="count" id="count" hidden></div></div>
   <div class="floor" id="floor"></div>
   <div class="typed" id="typed" aria-live="polite"></div>
@@ -198,7 +201,6 @@ const AV = ['#ff5c6a', '#2fa6ff', '#1fc98b', '#ffb21f', '#9a5cff', '#ff5fb0', '#
 const initials = n => n.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
 const avColor = s => { let h = 0; for (const ch of s) h = (h * 31 + ch.codePointAt(0)) >>> 0; return AV[h % AV.length]; };
 const avatar = (name, key) => `<span class="avatar" style="background:${avColor(key || name)}">${esc(initials(name))}</span>`;
-const HEART = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#ff5c6a" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.6 1.2 4.3 2.4.7-1.2 2.2-2.4 4.3-2.4 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg>';
 
 // атын және сыныбын келесі жолы қайта жазбау үшін есте сақтаймыз
 const player = { name: '', cls: '' };
@@ -224,7 +226,7 @@ function makeQuestion(level) {
   return { text: `${a} ${k === '-' ? '−' : k} ${b}`, ans, points: level };
 }
 
-const LIVES = 3;
+const GAME_SEC = 90;      // ойын ұзақтығы, секунд
 const PRAISE = ['Керемет!', 'Жарайсың!', 'Тамаша!', 'Күшті!', 'Мықты!', 'Алға!'];
 let G = null;
 $('reg').onsubmit = e => {
@@ -246,7 +248,7 @@ async function start(errEl) {
   catch (e) { errEl.textContent = e.message; return; }
   show('s-game');
   document.querySelectorAll('.drop, .puff, .pop, .praise').forEach(n => n.remove());
-  G = { id, drops: [], score: 0, lives: LIVES, combo: 0, solved: 0, input: '', time: 0, spawnIn: 0, running: false, last: 0, color: rnd(0, 5) };
+  G = { id, drops: [], score: 0, combo: 0, wrong: 0, solved: 0, input: '', time: 0, spawnIn: 0, running: false, last: 0, color: rnd(0, 5) };
   renderHud(); $('typed').textContent = '';
   const c = $('count'); c.hidden = false;
   for (const n of [3, 2, 1]) { c.innerHTML = `<span>${n}</span>`; await new Promise(r => setTimeout(r, 600)); }
@@ -254,17 +256,16 @@ async function start(errEl) {
   G.running = true; G.last = performance.now();
   requestAnimationFrame(loop);
 }
-const level = () => Math.min(5, 1 + Math.floor(G.time / 25));
+const level = () => Math.min(5, 1 + Math.floor(G.time / 18));   // әр 18 секунд сайын қиындайды
 const mult = () => G.combo >= 10 ? 3 : G.combo >= 5 ? 2 : 1;
-let hudLives = -1;
 function renderHud() {
+  const left = Math.max(0, GAME_SEC - G.time);
   $('h-score').textContent = G.score;
   $('h-level').textContent = level();
   $('h-combo').textContent = '×' + mult();
-  if (hudLives !== G.lives) {
-    hudLives = G.lives;
-    $('h-lives').innerHTML = Array.from({ length: LIVES }, (_, i) => `<span class="${i < G.lives ? '' : 'gone'}">${HEART}</span>`).join('');
-  }
+  $('h-time').textContent = Math.ceil(left);
+  $('h-timechip').classList.toggle('low', left <= 10);
+  $('h-tbar').style.transform = `scaleX(${left / GAME_SEC})`;
 }
 function spawn() {
   const field = $('field'), W = field.clientWidth, lv = level();
@@ -295,13 +296,16 @@ function loop(now) {
     d.el.classList.toggle('danger', !d.gold && d.y > floor * 0.65);
     if (d.y + d.el.offsetHeight >= floor) miss(d);
   }
-  if (G.lives <= 0) return gameOver();
+  if (G.time >= GAME_SEC) return gameOver();
   renderHud();
   requestAnimationFrame(loop);
 }
 function removeDrop(d) { d.el.remove(); G.drops = G.drops.filter(x => x !== d); }
 function miss(d) {
-  removeDrop(d); G.lives--; G.combo = 0;
+  const lost = Math.min(G.score, d.points);              // мысал өз ұпайын алып кетеді (0-ден төмен түспейді)
+  G.score -= lost; G.combo = 0;
+  negPop(d.x, $('field').clientHeight - 40, '−' + d.points);
+  removeDrop(d);
   const f = $('floor'); f.classList.add('hit'); setTimeout(() => f.classList.remove('hit'), 200);
   const fld = $('field'); fld.classList.remove('shake'); void fld.offsetWidth; fld.classList.add('shake');
   if (navigator.vibrate) try { navigator.vibrate(80); } catch {}
@@ -323,6 +327,11 @@ function popText(d, text) {
   t.style.left = d.x + 'px'; t.style.top = d.y + 'px';
   $('field').appendChild(t); setTimeout(() => t.remove(), 850);
 }
+function negPop(x, y, text) {
+  const t = document.createElement('div'); t.className = 'pop neg'; t.textContent = text;
+  t.style.left = x + 'px'; t.style.top = y + 'px';
+  $('field').appendChild(t); setTimeout(() => t.remove(), 850);
+}
 function praise(text, sub) {
   document.querySelectorAll('.praise').forEach(n => n.remove());
   const p = document.createElement('div'); p.className = 'praise';
@@ -335,7 +344,10 @@ function submit() {
   const v = Number(G.input);
   const hits = G.drops.filter(d => d.ans === v).sort((a, b) => b.y - a.y);
   G.input = ''; $('typed').textContent = '';
-  if (!hits.length) { G.combo = 0; flashTyped('bad'); renderHud(); return; }
+  if (!hits.length) {                                     // қате жауап: −1 ұпай, комбо нөлге түседі
+    G.score = Math.max(0, G.score - 1); G.combo = 0; G.wrong++;
+    flashTyped('bad'); negPop($('field').clientWidth / 2 - 14, $('field').clientHeight - 40, '−1'); renderHud(); return;
+  }
   const d = hits[0];
   G.combo++; G.solved++;
   const gain = d.points * mult() * (d.gold ? 3 : 1);
@@ -372,7 +384,7 @@ function resultTitle(score) {
   return 'Жақсы бастама!';
 }
 async function gameOver() {
-  const g = G; G.running = false; G = null; hudLives = -1;
+  const g = G; G.running = false; G = null;
   document.querySelectorAll('.drop, .praise').forEach(n => n.remove());
   show('s-end');
   $('e-avatar').textContent = initials(player.name);
