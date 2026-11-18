@@ -177,10 +177,10 @@ form.card { display: grid; gap: 14px; }
   <ul class="rules">
     <li><i class="c1" style="background:var(--c)">1</i><span>Мысалдар құлайды. <b>Қызыл сызыққа</b> тигенше жауабын жазып, <b>OK</b> бас. Теріс жауап үшін <b>−</b> батырмасы.</span></li>
     <li><i class="c4" style="background:var(--c)">x</i><span>Теңдеуде жауап — <b>x</b>-тің мәні. Мысалы, 3x + 5 = 20 → <b>5</b>.</span></li>
-    <li><i class="c0" style="background:var(--c)">−1</i><span>Ойын <b>90 секунд</b>. Қате жауап — <b>−1 ұпай</b>. Сызыққа тиген мысал өз ұпайын алып кетеді.</span></li>
+    <li><i class="c0" style="background:var(--c)">90</i><span>Ойын <b>90 секунд</b>. Ұпай алынбайды, бірақ қате жауап пен сызыққа тиген мысал <b>комбоны</b> нөлге түсіреді.</span></li>
     <li><i class="c3" style="background:var(--c)">×2</i><span>Қатарынан 5 дұрыс жауап — <b>×2</b>, 10 жауап — <b>×3</b> ұпай.</span></li>
     <li><i class="c5" style="background:var(--c)">★</i><span><b>Бонустар</b> (мысалын шеш): <b>+10 с</b> уақыт қосады, <b>МҰЗ</b> бәрін 4 секунд тоқтатады, <b>БОМБА</b> экрандағының бәрін жарады, <b>АЛТЫН</b> ×3 ұпай.</span></li>
-    <li><i class="c0" style="background:var(--c)">!</i><span><b>ҚАУІП</b> плиткасы сызыққа тисе <b>−5</b>. Шешсең — ×2 ұпай.</span></li>
+    <li><i class="c0" style="background:var(--c)">!</i><span><b>ҚАУІП</b> плиткасы тез түседі. Шешсең — <b>×2 ұпай</b>.</span></li>
   </ul>
 </section>
 
@@ -422,7 +422,7 @@ function spawn() {
   const w = el.offsetWidth;
   let x, ok, n = 0;
   do { x = rnd(4, Math.max(4, W - w - 4)); ok = !G.drops.some(d => d.y < 70 && Math.abs(d.x - x) < Math.max(w, d.w) + 8); n++; } while (!ok && n < 15);
-  const speed = (30 + G.time * 0.8 + rnd(0, 12)) * (field.clientHeight / 600) * (kind && kind !== 'trap' ? 0.85 : 1);
+  const speed = (30 + G.time * 0.8 + rnd(0, 12)) * (field.clientHeight / 600) * (kind === 'trap' ? 1.25 : kind ? 0.85 : 1);
   const d = { ...q, el, x, y: -50, w, speed, gold, kind, color: KIND_COLOR[kind] || getComputedStyle(el).getPropertyValue('--c') || '#fff' };
   el.style.transform = `translate(${x}px, ${d.y}px)`;
   G.drops.push(d);
@@ -458,9 +458,7 @@ function loop(now) {
 }
 function removeDrop(d) { d.el.remove(); G.drops = G.drops.filter(x => x !== d); }
 function miss(d) {
-  const pen = d.kind === 'trap' ? 5 : d.points;          // мысал өз ұпайын алып кетеді, ҚАУІП −5 (0-ден төмен түспейді)
-  G.score -= Math.min(G.score, pen); G.combo = 0;
-  negPop(d.x, $('field').clientHeight - 40, '−' + pen);
+  G.combo = 0;                                           // ұпай алынбайды, тек комбо нөлге түседі
   removeDrop(d);
   const f = $('floor'); f.classList.add('hit'); setTimeout(() => f.classList.remove('hit'), 200);
   const fld = $('field'); fld.classList.remove('shake'); void fld.offsetWidth; fld.classList.add('shake');
@@ -500,9 +498,9 @@ function submit() {
   const v = Number(G.input);
   const hits = G.drops.filter(d => d.ans === v).sort((a, b) => b.y - a.y);
   G.input = ''; $('typed').textContent = '';
-  if (!hits.length) {                                     // қате жауап: −1 ұпай, комбо нөлге түседі
-    G.score = Math.max(0, G.score - 1); G.combo = 0; G.wrong++;
-    SFX.wrong(); flashTyped('bad'); negPop($('field').clientWidth / 2 - 14, $('field').clientHeight - 40, '−1'); renderHud(); return;
+  if (!hits.length) {                                     // қате жауап: ұпай алынбайды, комбо нөлге түседі
+    const lost = G.combo >= 5; G.combo = 0; G.wrong++;
+    SFX.wrong(); flashTyped('bad'); if (lost) negPop($('field').clientWidth / 2 - 40, $('field').clientHeight - 40, 'комбо 0'); renderHud(); return;
   }
   const d = hits[0];
   G.combo++; G.solved++;
